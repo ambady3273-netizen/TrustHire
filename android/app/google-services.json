@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1062948093927",
+    "project_id": "trusthire-fa302",
+    "storage_bucket": "trusthire-fa302.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1062948093927:android:359210b9ea477adfb74742",
+        "android_client_info": {
+          "package_name": "com.example.trusthire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmAA60GMkZY3sJd2vIV04qBBFBifQn-sA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
