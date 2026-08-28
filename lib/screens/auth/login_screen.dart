@@ -77,10 +77,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                const Icon(
-                  Icons.verified_user,
-                  size: 90,
-                  color: AppColors.ink,
+                Image.asset(
+                  'assets/images/logo_mark.png',
+                  height: 90,
+                  width: 90,
                 ),
 
                 const SizedBox(height: 20),

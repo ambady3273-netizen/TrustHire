@@ -181,10 +181,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
 
-                    const Icon(
-                      Icons.verified_user,
-                      size: 90,
-                      color: AppColors.ink,
+                    Image.asset(
+                      'assets/images/logo_mark.png',
+                      height: 90,
+                      width: 90,
                     ),
 
                     const SizedBox(height: 20),

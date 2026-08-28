@@ -41,10 +41,10 @@ class RootMenuScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.shield,
-                color: AppColors.marigold,
-                size: 34,
+              Image.asset(
+                'assets/images/logo_mark.png',
+                height: 34,
+                width: 34,
               ),
 
               const SizedBox(height: 14),
