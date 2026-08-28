@@ -78,6 +78,44 @@ class JobModel {
   }
 
   // ============================================================
+  // COPY WITH
+  // ============================================================
+
+  JobModel copyWith({
+    String? id,
+    String? employerId,
+    String? companyName,
+    String? title,
+    String? description,
+    String? category,
+    String? location,
+    double? salary,
+    String? contact,
+    int? riskScore,
+    String? status,
+    List<String>? scamReasons,
+    bool? aiAnalyzed,
+    DateTime? createdAt,
+  }) {
+    return JobModel(
+      id: id ?? this.id,
+      employerId: employerId ?? this.employerId,
+      companyName: companyName ?? this.companyName,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      location: location ?? this.location,
+      salary: salary ?? this.salary,
+      contact: contact ?? this.contact,
+      riskScore: riskScore ?? this.riskScore,
+      status: status ?? this.status,
+      scamReasons: scamReasons ?? this.scamReasons,
+      aiAnalyzed: aiAnalyzed ?? this.aiAnalyzed,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  // ============================================================
   // TO FIRESTORE
   // ============================================================
 

@@ -60,7 +60,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(context, "/jobFeed");
+    // Let AuthGate read the Firestore role and route correctly.
+    Navigator.pushReplacementNamed(context, '/authGate');
   }
 
   @override
@@ -120,7 +121,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       return "Enter email";
                     }
 
-                    if (!value.contains("@")) {
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+
+                    if (!emailRegex.hasMatch(value.trim())) {
                       return "Invalid email";
                     }
 

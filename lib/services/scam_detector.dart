@@ -207,19 +207,10 @@ class ScamDetector {
     }
 
     // ---------------------------------------------------------
-    // 10. Phone/contact-only wording
+    // 10. Phone/contact-only wording (already covered by
+    //     suspiciousKeywords map above — no extra points added
+    //     here to avoid double-counting)
     // ---------------------------------------------------------
-
-    if (fullText.contains('only whatsapp') ||
-        fullText.contains('only telegram') ||
-        fullText.contains('whatsapp only') ||
-        fullText.contains('telegram only')) {
-      score += 15;
-
-      reasons.add(
-        'Employer relies heavily on external messaging platforms.',
-      );
-    }
 
     // ---------------------------------------------------------
     // Limit score to 100

@@ -372,8 +372,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
           actions: [
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
-                _clearForm();
+                Navigator.pop(context); // close dialog
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/employerDashboard',
+                    (route) => false,
+                  );
+                }
               },
               child: const Text('Done'),
             ),
@@ -381,24 +387,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
         );
       },
     );
-  }
-
-  // ============================================================
-  // CLEAR FORM
-  // ============================================================
-
-  void _clearForm() {
-    _titleController.clear();
-    _companyController.clear();
-    _descriptionController.clear();
-    _salaryController.clear();
-    _locationController.clear();
-    _contactController.clear();
-
-    setState(() {
-      _selectedCategory = null;
-      _analysisResult = null;
-    });
   }
 
   // ============================================================
@@ -545,7 +533,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 const SizedBox(height: 8),
 
                 DropdownButtonFormField<String>(
-  initialValue: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     prefixIcon:
                         Icon(Icons.category_outlined),

@@ -32,9 +32,11 @@ class _EmailVerificationScreenState
     if (authService.isEmailVerified) {
       if (!mounted) return;
 
+      // Route through AuthGate so it reads the role and goes to
+      // the correct dashboard.
       Navigator.pushNamedAndRemoveUntil(
         context,
-        "/jobFeed",
+        '/authGate',
         (route) => false,
       );
       return;

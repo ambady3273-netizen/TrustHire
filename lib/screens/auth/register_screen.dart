@@ -84,20 +84,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text("Success"),
+        title: const Text("Account Created"),
         content: const Text(
-          "Your account has been created successfully.",
+          "Your account has been created successfully. "
+          "Please verify your email before continuing.",
         ),
         actions: [
           FilledButton(
             onPressed: () {
               Navigator.pushNamedAndRemoveUntil(
-  context,
-  "/verifyEmail",
-  (route) => false,
-);
+                context,
+                '/verifyEmail',
+                (route) => false,
+              );
             },
-            child: const Text("Login"),
+            child: const Text("Continue"),
           ),
         ],
       ),

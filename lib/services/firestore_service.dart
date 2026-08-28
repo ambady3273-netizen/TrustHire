@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_model.dart';
 import '../models/job_model.dart';
+import '../models/application_model.dart';
 
 class FirestoreService {
   FirestoreService();
@@ -265,5 +266,106 @@ class FirestoreService {
       'aiAnalyzed': true,
       'aiAnalyzedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // ============================================================
+  // APPLICATIONS COLLECTION
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get applications =>
+      _firestore.collection('applications');
+
+  /// Apply for a job.
+  /// Returns the new application document ID, or throws if the
+  /// seeker has already applied to this job.
+  Future<String> applyForJob(ApplicationModel application) async {
+    // Prevent duplicate applications from the same seeker.
+    final existing = await applications
+        .where('jobId', isEqualTo: application.jobId)
+        .where('seekerId', isEqualTo: application.seekerId)
+        .limit(1)
+        .get();
+
+    if (existing.docs.isNotEmpty) {
+      throw Exception('You have already applied for this job.');
+    }
+
+    // Use server timestamp for both appliedAt and updatedAt.
+    final data = application.toMap();
+    data['appliedAt'] = FieldValue.serverTimestamp();
+    data['updatedAt'] = FieldValue.serverTimestamp();
+
+    final doc = await applications.add(data);
+    return doc.id;
+  }
+
+  /// Stream all applications for a specific job (employer view).
+  Stream<List<ApplicationModel>> getApplicationsForJob(String jobId) {
+    return applications
+        .where('jobId', isEqualTo: jobId)
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => ApplicationModel.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Stream all applications submitted by a seeker (seeker view).
+  Stream<List<ApplicationModel>> getMyApplications(String seekerId) {
+    return applications
+        .where('seekerId', isEqualTo: seekerId)
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => ApplicationModel.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Stream all applications across all jobs posted by an employer.
+  Stream<List<ApplicationModel>> getApplicationsForEmployer(
+      String employerId) {
+    return applications
+        .where('employerId', isEqualTo: employerId)
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => ApplicationModel.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Update an application's status (accept / reject / withdraw).
+  /// Also stamps updatedAt with a server timestamp.
+  Future<void> updateApplicationStatus(
+    String applicationId,
+    String status,
+  ) async {
+    await applications.doc(applicationId).update({
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Seeker withdraws their own application.
+  Future<void> withdrawApplication(String applicationId) async {
+    await applications.doc(applicationId).update({
+      'status': ApplicationStatus.withdrawn,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Check whether a seeker has already applied for a job.
+  /// Returns the application if found, null otherwise.
+  Future<ApplicationModel?> getExistingApplication({
+    required String jobId,
+    required String seekerId,
+  }) async {
+    final snap = await applications
+        .where('jobId', isEqualTo: jobId)
+        .where('seekerId', isEqualTo: seekerId)
+        .limit(1)
+        .get();
+
+    if (snap.docs.isEmpty) return null;
+    return ApplicationModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
   }
 }

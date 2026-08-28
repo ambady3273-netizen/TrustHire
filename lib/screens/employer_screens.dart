@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-class PostJobScreen extends StatelessWidget {
-  const PostJobScreen({super.key});
+/// Mock/demo PostJobScreen used in the prototype navigation flow.
+/// The real Firebase-connected PostJobScreen lives at
+/// screens/employer/post_job_screen.dart.
+class MockPostJobScreen extends StatelessWidget {
+  const MockPostJobScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
