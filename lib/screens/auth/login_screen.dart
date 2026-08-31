@@ -60,8 +60,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!mounted) return;
 
+<<<<<<< HEAD
     // Let AuthGate read the Firestore role and route correctly.
     Navigator.pushReplacementNamed(context, '/authGate');
+=======
+    // Delegate role-based routing to AuthGate so there is one
+    // single source of truth for where each role lands.
+    Navigator.pushReplacementNamed(context, "/authGate");
+>>>>>>> origin/user1
   }
 
   @override

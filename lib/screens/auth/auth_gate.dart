@@ -2,9 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+<<<<<<< HEAD
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme.dart';
+=======
+import '../../core/constants/app_constants.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/firestore_service.dart';
+>>>>>>> origin/user1
 import 'login_screen.dart';
 
 /// AuthGate — app entry point.
@@ -52,13 +58,29 @@ class AuthGate extends ConsumerWidget {
           );
         }
 
+<<<<<<< HEAD
         // ── Signed in — route by role ─────────────────────────
         return _RoleRouter(role: userModel.role);
+=======
+        // Check email verification before routing.
+        final authService = ref.read(authServiceProvider);
+        if (!authService.isEmailVerified) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/verifyEmail');
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return _HomeRedirect(uid: user.uid);
+>>>>>>> origin/user1
       },
     );
   }
 }
 
+<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────
 // Auto-create profile when Firestore doc is missing
 // ─────────────────────────────────────────────────────────────
@@ -75,12 +97,21 @@ class _AutoCreateProfileScreen extends ConsumerStatefulWidget {
     required this.displayName,
     required this.onLogout,
   });
+=======
+/// Fetches the user's role from Firestore and redirects to the
+/// appropriate home screen. Avoids hardcoding a single route for
+/// all roles.
+class _HomeRedirect extends StatefulWidget {
+  final String uid;
+  const _HomeRedirect({required this.uid});
+>>>>>>> origin/user1
 
   @override
   ConsumerState<_AutoCreateProfileScreen> createState() =>
       _AutoCreateProfileScreenState();
 }
 
+<<<<<<< HEAD
 class _AutoCreateProfileScreenState
     extends ConsumerState<_AutoCreateProfileScreen> {
   bool _isCreating = false;
@@ -118,6 +149,24 @@ class _AutoCreateProfileScreenState
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }
+=======
+class _HomeRedirectState extends State<_HomeRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    _redirect();
+  }
+
+  Future<void> _redirect() async {
+    final user = await FirestoreService.instance.getUser(widget.uid);
+
+    if (!mounted) return;
+
+    final role = user?.role ?? AppConstants.roleJobSeeker;
+    final route = AppConstants.homeRouteForRole(role);
+
+    Navigator.pushReplacementNamed(context, route);
+>>>>>>> origin/user1
   }
 
   @override
@@ -231,6 +280,7 @@ class _AutoCreateProfileScreenState
     );
   }
 }
+<<<<<<< HEAD
 
 // ─────────────────────────────────────────────────────────────
 // Role router
@@ -424,3 +474,5 @@ class _UnknownRoleScreen extends StatelessWidget {
     );
   }
 }
+=======
+>>>>>>> origin/user1

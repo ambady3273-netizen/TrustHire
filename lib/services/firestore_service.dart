@@ -2,16 +2,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_model.dart';
 import '../models/job_model.dart';
+<<<<<<< HEAD
 import '../models/application_model.dart';
+=======
+import '../models/notification_model.dart';
+import '../models/application_model.dart';
+import '../models/review_model.dart';
+>>>>>>> origin/user1
 
 class FirestoreService {
-  FirestoreService();
+  // Private constructor — use FirestoreService.instance everywhere.
+  FirestoreService._();
 
-  static final FirestoreService instance =
-      FirestoreService();
+  static final FirestoreService instance = FirestoreService._();
 
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ============================================================
   // USERS COLLECTION
@@ -269,12 +274,89 @@ class FirestoreService {
   }
 
   // ============================================================
+<<<<<<< HEAD
+=======
+  // NOTIFICATIONS COLLECTION
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get notifications =>
+      _firestore.collection('notifications');
+
+  /// Stream all notifications for a user, newest first.
+  Stream<List<NotificationModel>> getNotifications(String uid) {
+    return notifications
+        .where('userId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => NotificationModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
+  /// Stream only the unread count — cheap to watch from the app bar.
+  Stream<int> getUnreadCount(String uid) {
+    return notifications
+        .where('userId', isEqualTo: uid)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snap) => snap.docs.length);
+  }
+
+  /// Create a new notification document.
+  Future<void> createNotification(NotificationModel n) async {
+    await notifications.add(n.toMap());
+  }
+
+  /// Mark a single notification as read.
+  Future<void> markNotificationRead(String notifId) async {
+    await notifications.doc(notifId).update({'isRead': true});
+  }
+
+  /// Mark every unread notification for a user as read in a batch.
+  Future<void> markAllNotificationsRead(String uid) async {
+    final unread = await notifications
+        .where('userId', isEqualTo: uid)
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    if (unread.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in unread.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
+  }
+
+  /// Delete a single notification.
+  Future<void> deleteNotification(String notifId) async {
+    await notifications.doc(notifId).delete();
+  }
+
+  /// Delete all notifications for a user.
+  Future<void> clearAllNotifications(String uid) async {
+    final all = await notifications
+        .where('userId', isEqualTo: uid)
+        .get();
+
+    if (all.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in all.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  // ============================================================
+>>>>>>> origin/user1
   // APPLICATIONS COLLECTION
   // ============================================================
 
   CollectionReference<Map<String, dynamic>> get applications =>
       _firestore.collection('applications');
 
+<<<<<<< HEAD
   /// Apply for a job.
   /// Returns the new application document ID, or throws if the
   /// seeker has already applied to this job.
@@ -356,6 +438,16 @@ class FirestoreService {
   /// Check whether a seeker has already applied for a job.
   /// Returns the application if found, null otherwise.
   Future<ApplicationModel?> getExistingApplication({
+=======
+  /// Submit a new application. Returns the new document id.
+  Future<String> createApplication(ApplicationModel app) async {
+    final doc = await applications.add(app.toMap());
+    return doc.id;
+  }
+
+  /// Check whether a seeker already applied to a job.
+  Future<bool> hasApplied({
+>>>>>>> origin/user1
     required String jobId,
     required String seekerId,
   }) async {
@@ -364,8 +456,112 @@ class FirestoreService {
         .where('seekerId', isEqualTo: seekerId)
         .limit(1)
         .get();
+<<<<<<< HEAD
 
     if (snap.docs.isEmpty) return null;
     return ApplicationModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
   }
 }
+=======
+    return snap.docs.isNotEmpty;
+  }
+
+  /// Stream all applications for a seeker (their application history).
+  Stream<List<ApplicationModel>> getSeekerApplications(String seekerId) {
+    return applications
+        .where('seekerId', isEqualTo: seekerId)
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  /// Stream all applications for a specific job (employer view).
+  Stream<List<ApplicationModel>> getJobApplications(String jobId) {
+    return applications
+        .where('jobId', isEqualTo: jobId)
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  /// Update application status (shortlist, hire, reject).
+  Future<void> updateApplicationStatus(
+    String applicationId,
+    ApplicationStatus status,
+  ) async {
+    await applications.doc(applicationId).update({'status': status.value});
+  }
+
+  // ============================================================
+  // REVIEWS COLLECTION
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get reviews =>
+      _firestore.collection('reviews');
+
+  /// Save a review and recalculate the reviewed user's trust score.
+  Future<void> submitReview(ReviewModel review) async {
+    // Write review
+    await reviews.add(review.toMap());
+
+    // Recalculate average rating for the reviewed user
+    final snap = await reviews
+        .where('reviewedUserId', isEqualTo: review.reviewedUserId)
+        .get();
+
+    if (snap.docs.isEmpty) return;
+
+    double total = 0;
+    for (final doc in snap.docs) {
+      total += (doc.data()['rating'] ?? 0).toDouble();
+    }
+    final avg = total / snap.docs.length;
+
+    // TrustScore formula:
+    //   base 20 (verified) + up to 60 from avg rating (max 5★ → 60pts)
+    //   + up to 20 from job count (capped at 20)
+    final jobCount = snap.docs.length;
+    final ratingPts = (avg / 5.0) * 60;
+    final jobPts = jobCount > 20 ? 20.0 : jobCount.toDouble();
+    final score = (20 + ratingPts + jobPts).clamp(0.0, 100.0);
+
+    await updateTrustScore(review.reviewedUserId, score);
+  }
+
+  /// Stream all reviews received by a user.
+  Stream<List<ReviewModel>> getUserReviews(String userId) {
+    return reviews
+        .where('reviewedUserId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => ReviewModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  // ============================================================
+  // ADMIN HELPERS
+  // ============================================================
+
+  /// Stream jobs pending admin review.
+  Stream<List<JobModel>> getPendingReviewJobs() {
+    return jobs
+        .where('status', isEqualTo: 'pending_review')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  /// Stream users whose KYC is not yet verified.
+  Stream<List<UserModel>> getUnverifiedUsers() {
+    return users
+        .where('verified', isEqualTo: false)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => UserModel.fromMap(d.data())).toList());
+  }
+}
+>>>>>>> origin/user1
