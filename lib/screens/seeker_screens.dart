@@ -1,158 +1,312 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../core/routes/app_routes.dart';
+import '../models/application_model.dart';
+import '../models/job_model.dart';
+import '../providers/applications_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/jobs_provider.dart';
+import '../providers/notifications_provider.dart';
+import '../services/firestore_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-class JobFeedScreen extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// JOB FEED
+// ═══════════════════════════════════════════════════════════════
+
+class JobFeedScreen extends ConsumerWidget {
   const JobFeedScreen({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    final jobs = [
-      {
-        'badge': 'verified', 'title': 'Weekend Store Assistant', 'sub': 'Meenakshi Textiles · Anna Nagar',
-        'dist': '0.8 km', 'pay': '₹600/day', 'trust': 81,
-      },
-      {
-        'badge': 'warn', 'title': 'Delivery Partner — 2 wks', 'sub': 'QuickCart Services · Sellur',
-        'dist': '2.1 km', 'pay': '₹9,000 total', 'trust': 40,
-      },
-      {
-        'badge': 'verified', 'title': 'Event Setup Crew (5 needed)', 'sub': 'Sri Kalyanam Events · Goripalayam',
-        'dist': '1.4 km', 'pay': '₹800/day', 'trust': 95,
-      },
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount =
+        ref.watch(unreadNotificationCountProvider).whenOrNull(data: (n) => n) ??
+            0;
+    final jobsAsync = ref.watch(approvedJobsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.shield_outlined, size: 18),
             SizedBox(width: 6),
             Text('TrustHire'),
           ],
         ),
         actions: [
-          const Icon(Icons.notifications_none_rounded),
-          const SizedBox(width: 12),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.notifications),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: IgnorePointer(
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: AppColors.coral,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                          minWidth: 16, minHeight: 16),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 4),
           const TrustRing(percent: 62, size: 30),
           const SizedBox(width: 16),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: FieldBox('Search jobs near Madurai', icon: Icons.search),
-          ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                AppBadge('All', type: BadgeType.ink),
-                SizedBox(width: 8),
-                _FilterChip('Delivery'),
-                SizedBox(width: 8),
-                _FilterChip('Retail'),
-                SizedBox(width: 8),
-                _FilterChip('Events'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(top: 8, bottom: 16),
-              itemCount: jobs.length,
-              itemBuilder: (context, i) {
-                final j = jobs[i];
-                return InkWell(
-                  onTap: () => Navigator.pushNamed(context, '/jobDetails'),
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            AppBadge(
-                              j['badge'] == 'verified' ? '✓ AI-verified' : '⚠ Under review',
-                              type: j['badge'] == 'verified' ? BadgeType.verified : BadgeType.warn,
-                            ),
-                            Text(j['dist'] as String, style: const TextStyle(fontSize: 10.5, color: AppColors.mute)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(j['title'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                        const SizedBox(height: 2),
-                        Text(j['sub'] as String, style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(j['pay'] as String,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: AppColors.ink)),
-                            Row(
-                              children: [
-                                TrustRing(percent: j['trust'] as int, size: 28),
-                                const SizedBox(width: 5),
-                                const Text('Employer', style: TextStyle(fontSize: 10, color: AppColors.mute)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+      body: jobsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Text('Error loading jobs\n$e',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.mute)),
+        ),
+        data: (jobs) {
+          if (jobs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.work_off_outlined,
+                      size: 52, color: AppColors.border),
+                  const SizedBox(height: 14),
+                  const Text('No approved jobs yet.',
+                      style: TextStyle(color: AppColors.mute)),
+                ],
+              ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.only(top: 8, bottom: 16),
+            itemCount: jobs.length,
+            itemBuilder: (context, i) => _JobCard(job: jobs[i]),
+          );
+        },
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.search), label: 'Jobs'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Applications'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
+          NavigationDestination(
+              icon: Icon(Icons.search), label: 'Jobs'),
+          NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              label: 'My Applications'),
+          NavigationDestination(
+              icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
         onDestinationSelected: (i) {
-          if (i == 1) Navigator.pushNamed(context, '/chat');
+          if (i == 1) {
+            Navigator.pushNamed(context, AppRoutes.myApplications);
+          }
         },
       ),
     );
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  const _FilterChip(this.label);
+class _JobCard extends ConsumerWidget {
+  final JobModel job;
+  const _JobCard({required this.job});
+
   @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label, style: const TextStyle(fontSize: 11, color: AppColors.mute)),
-      backgroundColor: Colors.white,
-      side: const BorderSide(color: AppColors.border),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSafe = job.status == 'approved' && job.riskScore <= 30;
+    return InkWell(
+      onTap: () {
+        ref.read(selectedJobProvider.notifier).state = job;
+        Navigator.pushNamed(context, AppRoutes.jobDetails);
+      },
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AppBadge(
+                  isSafe ? '✓ AI-verified' : '⚠ Under review',
+                  type: isSafe ? BadgeType.verified : BadgeType.warn,
+                ),
+                Text(
+                  job.category,
+                  style: const TextStyle(
+                      fontSize: 10.5, color: AppColors.mute),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(job.title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 13.5)),
+            const SizedBox(height: 2),
+            Text('${job.companyName} · ${job.location}',
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.mute)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('₹${_fmt(job.salary)} / mo',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: AppColors.ink)),
+                Row(
+                  children: [
+                    TrustRing(
+                        percent: job.riskScore > 0
+                            ? (100 - job.riskScore).clamp(0, 100)
+                            : 80,
+                        size: 28),
+                    const SizedBox(width: 5),
+                    const Text('Safety',
+                        style: TextStyle(
+                            fontSize: 10, color: AppColors.mute)),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  String _fmt(double v) =>
+      NumberFormat('#,##0', 'en_IN').format(v.toInt());
 }
 
-class JobDetailsScreen extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// JOB DETAILS
+// ═══════════════════════════════════════════════════════════════
+
+class JobDetailsScreen extends ConsumerStatefulWidget {
   const JobDetailsScreen({super.key});
+
+  @override
+  ConsumerState<JobDetailsScreen> createState() => _JobDetailsScreenState();
+}
+
+class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
+  bool _applying = false;
+
+  Future<void> _apply(JobModel job) async {
+    setState(() => _applying = true);
+
+    // Fetch current user profile for name/email
+    final uid =
+        ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
+    if (uid == null) {
+      setState(() => _applying = false);
+      return;
+    }
+    final userDoc = await FirestoreService.instance.getUser(uid);
+
+    final error = await ref
+        .read(applicationsNotifierProvider.notifier)
+        .apply(
+          jobId: job.id,
+          jobTitle: job.title,
+          companyName: job.companyName,
+          seekerName: userDoc?.fullName ?? 'Unknown',
+          seekerEmail: userDoc?.email ?? '',
+        );
+
+    setState(() => _applying = false);
+    if (!mounted) return;
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(error), backgroundColor: AppColors.coral),
+      );
+      return;
+    }
+
+    // Success
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Application Sent!'),
+        content: Text(
+            'You have applied for "${job.title}". '
+            'The employer will review your profile.'),
+        actions: [
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final job = ref.watch(selectedJobProvider);
+
+    if (job == null) {
+      return const Scaffold(
+        body: Center(child: Text('Job not found.')),
+      );
+    }
+
+    final isSafe = job.riskScore <= 30;
+    final safetyScore = (100 - job.riskScore).clamp(0, 100);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Job details'), actions: const [Icon(Icons.flag_outlined), SizedBox(width: 16)]),
+      appBar: AppBar(
+        title: Text(job.title, overflow: TextOverflow.ellipsis),
+        actions: const [Icon(Icons.flag_outlined), SizedBox(width: 16)],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         children: [
-          const AppBadge('✓ Passed AI fraud check', type: BadgeType.verified),
+          AppBadge(
+            isSafe ? '✓ Passed AI fraud check' : '⚠ Under review',
+            type: isSafe ? BadgeType.verified : BadgeType.warn,
+          ),
           const SizedBox(height: 10),
-          const Text('Weekend Store Assistant', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(job.title,
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
-          const Text('Meenakshi Textiles · Anna Nagar, Madurai', style: TextStyle(fontSize: 12, color: AppColors.mute)),
+          Text('${job.companyName} · ${job.location}',
+              style:
+                  const TextStyle(fontSize: 12, color: AppColors.mute)),
           const SizedBox(height: 14),
+
+          // Employer card
           AppCard(
             child: Row(
               children: [
@@ -161,50 +315,94 @@ class JobDetailsScreen extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('Meenakshi Textiles', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                      SizedBox(height: 2),
-                      Text('Business verified · 3 yrs on TrustHire', style: TextStyle(fontSize: 10.5, color: AppColors.mute)),
+                    children: [
+                      Text(job.companyName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5)),
+                      const SizedBox(height: 2),
+                      Text('Category: ${job.category}',
+                          style: const TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.mute)),
                     ],
                   ),
                 ),
-                const TrustRing(percent: 81, size: 30),
+                TrustRing(percent: safetyScore, size: 30),
               ],
             ),
           ),
+
+          // Pay & details
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const LabelSmall('Pay & schedule'),
-                _kv('Rate', '₹600 / day'),
-                _kv('Duration', 'Sat–Sun, 4 weeks'),
-                _kv('Payment', '🔒 Escrow protected', valueColor: AppColors.teal),
+                const LabelSmall('Pay & details'),
+                _kv('Salary',
+                    '₹${NumberFormat('#,##0', 'en_IN').format(job.salary.toInt())}'),
+                _kv('Location', job.location),
+                _kv('Category', job.category),
+                _kv('Contact', job.contact),
+                _kv('Payment', '🔒 Escrow protected',
+                    valueColor: AppColors.teal),
               ],
             ),
           ),
+
+          // Description
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                LabelSmall('Description'),
-                Text(
-                  'Assist customers, manage billing counter, restock shelves during weekend rush. Prior retail experience preferred but not required.',
-                  style: TextStyle(fontSize: 12, height: 1.5),
-                ),
+              children: [
+                const LabelSmall('Description'),
+                Text(job.description,
+                    style: const TextStyle(
+                        fontSize: 12, height: 1.5)),
               ],
             ),
           ),
+
+          // Risk indicators (if any)
+          if (job.scamReasons.isNotEmpty && !isSafe)
+            AppCard(
+              borderColor: AppColors.coral,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const LabelSmall('Review notes'),
+                  ...job.scamReasons.map(
+                    (r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.info_outline,
+                              size: 13, color: AppColors.coral),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: Text(r,
+                                  style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppColors.mute))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           const SizedBox(height: 90),
         ],
       ),
       bottomSheet: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
         child: PrimaryButton(
-          label: 'Apply now',
+          label: _applying ? 'Applying…' : 'Apply now',
           color: AppColors.marigold,
           textColor: AppColors.inkDark,
-          onTap: () => Navigator.pushNamed(context, '/chat'),
+          onTap: _applying ? null : () => _apply(job),
         ),
       ),
     );
@@ -216,31 +414,52 @@ class JobDetailsScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: const TextStyle(fontSize: 12, color: AppColors.mute)),
-          Text(v, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: valueColor)),
+          Text(k,
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.mute)),
+          Flexible(
+            child: Text(v,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor)),
+          ),
         ],
       ),
     );
   }
 }
 
-class ChatScreen extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// CHAT (improved — still static messages, real context header)
+// ═══════════════════════════════════════════════════════════════
+
+class ChatScreen extends ConsumerWidget {
   const ChatScreen({super.key});
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final job = ref.watch(selectedJobProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
-          children: const [
-            Avatar(size: 28),
-            SizedBox(width: 10),
+          children: [
+            const Avatar(size: 28),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Meenakshi Textiles', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                  Text('✓ Verified employer', style: TextStyle(fontSize: 10.5, color: AppColors.teal)),
+                  Text(job?.companyName ?? 'Employer',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700)),
+                  const Text('✓ Verified employer',
+                      style: TextStyle(
+                          fontSize: 10.5, color: AppColors.teal)),
                 ],
               ),
             ),
@@ -250,17 +469,25 @@ class ChatScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const EscrowLockBar(amountLabel: '₹2,400'),
+          EscrowLockBar(
+              amountLabel:
+                  job != null ? '₹${job.salary.toStringAsFixed(0)}' : '—'),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               children: [
-                _bubble("Hi! You're selected for the weekend role. Can you start this Saturday, 10am?", mine: false),
+                _bubble(
+                    "Hi! You're selected for the role. "
+                    "Can you start this Saturday, 10am?",
+                    mine: false),
                 _bubble('Yes, that works for me!', mine: true),
                 const SizedBox(height: 10),
-                const Center(child: AppBadge('Payment locked in escrow ✓', type: BadgeType.verified)),
+                const Center(
+                    child: AppBadge(
+                        'Payment locked in escrow ✓',
+                        type: BadgeType.verified)),
                 const SizedBox(height: 10),
-                _bubble('Great, see you Saturday at the Anna Nagar store.', mine: false),
+                _bubble('Great, see you Saturday!', mine: false),
               ],
             ),
           ),
@@ -268,13 +495,16 @@ class ChatScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
             child: Row(
               children: [
-                Expanded(child: FieldBox('Message…')),
+                const Expanded(child: FieldBox('Message…')),
                 const SizedBox(width: 8),
                 Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 18),
                 ),
               ],
             ),
@@ -282,8 +512,9 @@ class ChatScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/rate'),
-              child: const Text('Demo: mark job complete →'),
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.rate),
+              child: const Text('Mark job complete →'),
             ),
           ),
         ],
@@ -293,11 +524,13 @@ class ChatScreen extends StatelessWidget {
 
   Widget _bubble(String text, {required bool mine}) {
     return Align(
-      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 260),
         margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
           color: mine ? AppColors.ink : Colors.white,
           borderRadius: BorderRadius.only(
@@ -308,59 +541,155 @@ class ChatScreen extends StatelessWidget {
           ),
           border: mine ? null : Border.all(color: AppColors.border),
         ),
-        child: Text(text, style: TextStyle(fontSize: 12.5, color: mine ? Colors.white : AppColors.text)),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 12.5,
+                color: mine ? Colors.white : AppColors.text)),
       ),
     );
   }
 }
 
-class RateScreen extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// RATE SCREEN — saves review + updates trust score
+// ═══════════════════════════════════════════════════════════════
+
+class RateScreen extends ConsumerStatefulWidget {
   const RateScreen({super.key});
+
+  @override
+  ConsumerState<RateScreen> createState() => _RateScreenState();
+}
+
+class _RateScreenState extends ConsumerState<RateScreen> {
+  int _rating = 5;
+  final _noteController = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() => _submitting = true);
+
+    final job = ref.read(selectedJobProvider);
+    final uid =
+        ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
+
+    if (job != null && uid != null) {
+      final review = ReviewModel(
+        reviewId: '',
+        jobId: job.id,
+        applicationId: '',
+        reviewerId: uid,
+        reviewedUserId: job.employerId,
+        reviewerRole: 'job_seeker',
+        rating: _rating,
+        comment: _noteController.text.trim(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      );
+      try {
+        await FirestoreService.instance.submitReview(review);
+      } catch (_) {}
+    }
+
+    setState(() => _submitting = false);
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+        context, AppRoutes.jobFeed, (r) => r.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final job = ref.watch(selectedJobProvider);
+    final salary = job?.salary.toStringAsFixed(0) ?? '0';
+
     return Scaffold(
       appBar: AppBar(title: const Text('Job complete')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Text('🎉', style: TextStyle(fontSize: 34)),
+            const Text('🎉',
+                style: TextStyle(fontSize: 34)),
             const SizedBox(height: 6),
-            const Text('Job completed', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            const Text('Job completed',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink)),
             const SizedBox(height: 4),
-            const Text('₹2,400 has been released to your wallet', style: TextStyle(fontSize: 12, color: AppColors.mute)),
+            Text('₹$salary has been released to your wallet',
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.mute)),
             const SizedBox(height: 18),
             AppCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text('Escrow released', style: TextStyle(fontSize: 12, color: AppColors.mute)),
-                  Text('₹2,400.00', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.teal)),
+                children: [
+                  const Text('Escrow released',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.mute)),
+                  Text('₹$salary',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.teal)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text('Rate Meenakshi Textiles', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                padding: const EdgeInsets.only(left: 16),
+                child: Text(
+                  'Rate ${job?.companyName ?? 'the employer'}',
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink),
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (i) => const Icon(Icons.star_rounded, color: AppColors.marigold, size: 30)),
+              children: List.generate(
+                5,
+                (i) => GestureDetector(
+                  onTap: () => setState(() => _rating = i + 1),
+                  child: Icon(
+                    i < _rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: AppColors.marigold,
+                    size: 34,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 14),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: FieldBox('Add a note for other job seekers (optional)', height: 60),
+              padding: const EdgeInsets.symmetric(horizontal: 0),
+              child: TextField(
+                controller: _noteController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Add a note for other job seekers (optional)',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
             ),
             const Spacer(),
             PrimaryButton(
-              label: 'Submit review',
-              onTap: () => Navigator.popUntil(context, (r) => r.isFirst),
+              label: _submitting ? 'Submitting…' : 'Submit review',
+              onTap: _submitting ? null : _submit,
             ),
           ],
         ),

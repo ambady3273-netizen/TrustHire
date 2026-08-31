@@ -1,9 +1,23 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../core/routes/app_routes.dart';
+import '../providers/auth_provider.dart';
+import '../services/firestore_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
+// ═══════════════════════════════════════════════════════════════
+// SPLASH
+// ═══════════════════════════════════════════════════════════════
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,29 +31,40 @@ class SplashScreen extends StatelessWidget {
               Container(
                 width: 84,
                 height: 84,
-                decoration: const BoxDecoration(color: AppColors.marigold, shape: BoxShape.circle),
-                child: const Icon(Icons.check_rounded, color: AppColors.ink, size: 40),
+                decoration: const BoxDecoration(
+                    color: AppColors.marigold, shape: BoxShape.circle),
+                child: const Icon(Icons.check_rounded,
+                    color: AppColors.ink, size: 40),
               ),
               const SizedBox(height: 22),
               const Text('TrustHire',
-                  style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               const Text(
                 'Verified employers. Protected pay.\nReal part-time work, near you.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFFC9D2E6), fontSize: 13.5, height: 1.5),
+                style: TextStyle(
+                    color: Color(0xFFC9D2E6),
+                    fontSize: 13.5,
+                    height: 1.5),
               ),
               const Spacer(),
               PrimaryButton(
                 label: 'Get started',
                 color: AppColors.marigold,
                 textColor: AppColors.inkDark,
-                onTap: () => Navigator.pushNamed(context, '/role'),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.role),
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () {},
-                child: const Text('I already have an account', style: TextStyle(color: Colors.white70)),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.login),
+                child: const Text('I already have an account',
+                    style: TextStyle(color: Colors.white70)),
               ),
             ],
           ),
@@ -49,8 +74,13 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ROLE SELECT
+// ═══════════════════════════════════════════════════════════════
+
 class RoleSelectScreen extends StatelessWidget {
   const RoleSelectScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +91,10 @@ class RoleSelectScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('How will you use TrustHire?',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink)),
             const SizedBox(height: 4),
             const Text('You can add the other role later from Settings.',
                 style: TextStyle(fontSize: 12, color: AppColors.mute)),
@@ -69,7 +102,7 @@ class RoleSelectScreen extends StatelessWidget {
             AppCard(
               borderColor: AppColors.ink,
               borderWidth: 2,
-              child: _RoleRow(
+              child: const _RoleRow(
                 icon: Icons.person_outline,
                 bg: AppColors.tealLight,
                 fg: AppColors.teal,
@@ -78,7 +111,7 @@ class RoleSelectScreen extends StatelessWidget {
               ),
             ),
             AppCard(
-              child: _RoleRow(
+              child: const _RoleRow(
                 icon: Icons.storefront_outlined,
                 bg: AppColors.warnBg,
                 fg: AppColors.marigoldDark,
@@ -87,7 +120,11 @@ class RoleSelectScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            PrimaryButton(label: 'Continue', onTap: () => Navigator.pushNamed(context, '/kyc')),
+            PrimaryButton(
+              label: 'Continue',
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.kyc),
+            ),
           ],
         ),
       ),
@@ -101,7 +138,14 @@ class _RoleRow extends StatelessWidget {
   final Color fg;
   final String title;
   final String subtitle;
-  const _RoleRow({required this.icon, required this.bg, required this.fg, required this.title, required this.subtitle});
+  const _RoleRow({
+    required this.icon,
+    required this.bg,
+    required this.fg,
+    required this.title,
+    required this.subtitle,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -109,7 +153,8 @@ class _RoleRow extends StatelessWidget {
         Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: bg, borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: fg, size: 20),
         ),
         const SizedBox(width: 12),
@@ -117,9 +162,13 @@ class _RoleRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 11.5, color: AppColors.mute)),
             ],
           ),
         ),
@@ -128,8 +177,80 @@ class _RoleRow extends StatelessWidget {
   }
 }
 
-class KycScreen extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════
+// KYC SCREEN — real image_picker + Firebase Storage upload
+// ═══════════════════════════════════════════════════════════════
+
+class KycScreen extends ConsumerStatefulWidget {
   const KycScreen({super.key});
+
+  @override
+  ConsumerState<KycScreen> createState() => _KycScreenState();
+}
+
+class _KycScreenState extends ConsumerState<KycScreen> {
+  File? _idFile;
+  File? _selfieFile;
+  bool _uploading = false;
+  String? _error;
+
+  final _picker = ImagePicker();
+
+  Future<void> _pickId() async {
+    final picked =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked != null) setState(() => _idFile = File(picked.path));
+  }
+
+  Future<void> _pickSelfie() async {
+    final picked =
+        await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (picked != null) setState(() => _selfieFile = File(picked.path));
+  }
+
+  Future<void> _submit() async {
+    if (_idFile == null || _selfieFile == null) {
+      setState(() => _error = 'Please upload both your ID and selfie.');
+      return;
+    }
+
+    setState(() {
+      _uploading = true;
+      _error = null;
+    });
+
+    try {
+      final uid =
+          ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
+      if (uid == null) throw Exception('Not logged in');
+
+      final storage = FirebaseStorage.instance;
+
+      // Upload government ID
+      final idRef =
+          storage.ref('kyc/$uid/government_id.jpg');
+      await idRef.putFile(_idFile!);
+      final idUrl = await idRef.getDownloadURL();
+
+      // Upload selfie
+      final selfieRef =
+          storage.ref('kyc/$uid/selfie.jpg');
+      await selfieRef.putFile(_selfieFile!);
+
+      // Save ID URL to user profile; mark as pending review
+      await FirestoreService.instance
+          .updateProfileImage(uid, idUrl);
+
+      if (mounted) {
+        Navigator.pushNamed(context, AppRoutes.trustIntro);
+      }
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _uploading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,52 +262,123 @@ class KycScreen extends StatelessWidget {
           children: [
             const AppBadge('Step 2 of 3', type: BadgeType.ink),
             const SizedBox(height: 12),
-            const Text('This unlocks your Trust Ring and lets employers see you\'re real.',
-                style: TextStyle(fontSize: 12, color: AppColors.mute)),
+            const Text(
+                "Upload your ID and take a selfie. "
+                "This unlocks your Trust Ring.",
+                style:
+                    TextStyle(fontSize: 12, color: AppColors.mute)),
             const SizedBox(height: 18),
             const LabelSmall('Government ID'),
-            _uploadBox(Icons.description_outlined, 'Upload Aadhaar / PAN', 'JPG, PNG or PDF · under 5MB'),
+            _UploadBox(
+              icon: Icons.description_outlined,
+              title: _idFile == null
+                  ? 'Upload Aadhaar / PAN'
+                  : '✓ ID selected',
+              subtitle: 'JPG or PNG · under 5 MB',
+              picked: _idFile != null,
+              onTap: _uploading ? null : _pickId,
+            ),
             const SizedBox(height: 14),
             const LabelSmall('Selfie match'),
-            _uploadBox(Icons.face_retouching_natural, 'Take a live selfie', 'Matched automatically against your ID'),
+            _UploadBox(
+              icon: Icons.face_retouching_natural,
+              title: _selfieFile == null
+                  ? 'Take a live selfie'
+                  : '✓ Selfie captured',
+              subtitle: 'Camera · matched against your ID',
+              picked: _selfieFile != null,
+              onTap: _uploading ? null : _pickSelfie,
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!,
+                  style: const TextStyle(
+                      color: AppColors.coral, fontSize: 12)),
+            ],
             const Spacer(),
             const Center(
-              child: Text('Reviewed within 24 hours', style: TextStyle(fontSize: 11, color: AppColors.mute)),
+              child: Text('Reviewed within 24 hours',
+                  style:
+                      TextStyle(fontSize: 11, color: AppColors.mute)),
             ),
             const SizedBox(height: 10),
             PrimaryButton(
-              label: 'Submit for verification',
-              onTap: () => Navigator.pushNamed(context, '/trustIntro'),
+              label: _uploading
+                  ? 'Uploading…'
+                  : 'Submit for verification',
+              onTap: _uploading ? null : _submit,
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _uploadBox(IconData icon, String title, String subtitle) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 2),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.mute, size: 26),
-          const SizedBox(height: 6),
-          Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 10, color: AppColors.mute)),
-        ],
+class _UploadBox extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool picked;
+  final VoidCallback? onTap;
+
+  const _UploadBox({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.picked,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+            vertical: 22, horizontal: 14),
+        decoration: BoxDecoration(
+          color: picked
+              ? AppColors.tealLight
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: picked ? AppColors.teal : AppColors.border,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon,
+                color: picked ? AppColors.teal : AppColors.mute,
+                size: 26),
+            const SizedBox(height: 6),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: picked
+                        ? AppColors.teal
+                        : AppColors.ink)),
+            const SizedBox(height: 2),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontSize: 10, color: AppColors.mute)),
+          ],
+        ),
       ),
     );
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TRUST INTRO
+// ═══════════════════════════════════════════════════════════════
+
 class TrustIntroScreen extends StatelessWidget {
   const TrustIntroScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,28 +387,42 @@ class TrustIntroScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const AppBadge('✓ Identity confirmed', type: BadgeType.verified),
+            const AppBadge('✓ Identity confirmed',
+                type: BadgeType.verified),
             const SizedBox(height: 18),
             const TrustRing(percent: 35, size: 92),
             const SizedBox(height: 16),
             const Text('This is your Trust Ring',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink)),
             const SizedBox(height: 6),
             const Text(
-              "It grows as you complete jobs, collect reviews, and stay complaint-free. Everyone you work with can see it.",
+              "It grows as you complete jobs, collect reviews, "
+              "and stay complaint-free. Everyone you work with can see it.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.mute, height: 1.5),
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.mute, height: 1.5),
             ),
             const SizedBox(height: 18),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Ways to grow it', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                  Text('Ways to grow it',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink)),
                   SizedBox(height: 8),
                   _GrowRow(label: '✓ ID verified', points: '+20'),
-                  _GrowRow(label: 'Complete your first job', points: '+15'),
-                  _GrowRow(label: 'Get 5 reviews above 4★', points: '+15'),
+                  _GrowRow(
+                      label: 'Complete your first job',
+                      points: '+15'),
+                  _GrowRow(
+                      label: 'Get 5 reviews above 4★',
+                      points: '+15'),
                 ],
               ),
             ),
@@ -225,7 +431,8 @@ class TrustIntroScreen extends StatelessWidget {
               label: 'Find your first job',
               color: AppColors.marigold,
               textColor: AppColors.inkDark,
-              onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/jobFeed', (r) => r.isFirst),
+              onTap: () => Navigator.pushNamedAndRemoveUntil(
+                  context, AppRoutes.jobFeed, (r) => r.isFirst),
             ),
           ],
         ),
@@ -238,6 +445,7 @@ class _GrowRow extends StatelessWidget {
   final String label;
   final String points;
   const _GrowRow({required this.label, required this.points});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -245,8 +453,14 @@ class _GrowRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
-          Text(points, style: const TextStyle(fontSize: 11.5, color: AppColors.ink, fontWeight: FontWeight.w700)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 11.5, color: AppColors.mute)),
+          Text(points,
+              style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w700)),
         ],
       ),
     );

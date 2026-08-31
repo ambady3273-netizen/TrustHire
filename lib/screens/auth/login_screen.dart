@@ -60,7 +60,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(context, "/jobFeed");
+    // Delegate role-based routing to AuthGate so there is one
+    // single source of truth for where each role lands.
+    Navigator.pushReplacementNamed(context, "/authGate");
   }
 
   @override

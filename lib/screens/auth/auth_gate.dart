@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/firestore_service.dart';
 import 'login_screen.dart';
 
 class AuthGate extends ConsumerWidget {
@@ -32,14 +34,29 @@ class AuthGate extends ConsumerWidget {
           return const LoginScreen();
         }
 
-        return const _HomeRedirect();
+        // Check email verification before routing.
+        final authService = ref.read(authServiceProvider);
+        if (!authService.isEmailVerified) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/verifyEmail');
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return _HomeRedirect(uid: user.uid);
       },
     );
   }
 }
 
+/// Fetches the user's role from Firestore and redirects to the
+/// appropriate home screen. Avoids hardcoding a single route for
+/// all roles.
 class _HomeRedirect extends StatefulWidget {
-  const _HomeRedirect();
+  final String uid;
+  const _HomeRedirect({required this.uid});
 
   @override
   State<_HomeRedirect> createState() => _HomeRedirectState();
@@ -49,10 +66,18 @@ class _HomeRedirectState extends State<_HomeRedirect> {
   @override
   void initState() {
     super.initState();
+    _redirect();
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, "/jobFeed");
-    });
+  Future<void> _redirect() async {
+    final user = await FirestoreService.instance.getUser(widget.uid);
+
+    if (!mounted) return;
+
+    final role = user?.role ?? AppConstants.roleJobSeeker;
+    final route = AppConstants.homeRouteForRole(role);
+
+    Navigator.pushReplacementNamed(context, route);
   }
 
   @override

@@ -14,7 +14,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
 });
 
 final firestoreServiceProvider = Provider<FirestoreService>((ref) {
-  return FirestoreService();
+  return FirestoreService.instance;
 });
 
 /// Authentication Provider
