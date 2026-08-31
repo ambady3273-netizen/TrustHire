@@ -58,6 +58,16 @@ final employerApplicationsProvider =
 });
 
 // ============================================================
+// PENDING REVIEW JOBS — admin fraud queue
+// ============================================================
+
+/// Streams all jobs with status 'pending_review' for admin moderation.
+final pendingJobsProvider = StreamProvider<List<JobModel>>((ref) {
+  final firestore = ref.watch(firestoreServiceProvider);
+  return firestore.getPendingReviewJobs();
+});
+
+// ============================================================
 // JOB-SPECIFIC APPLICATIONS — for a single job (employer view)
 // ============================================================
 

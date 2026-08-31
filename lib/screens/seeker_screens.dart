@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../core/routes/app_routes.dart';
 import '../models/application_model.dart';
 import '../models/job_model.dart';
-import '../providers/applications_provider.dart';
+import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
-import '../providers/jobs_provider.dart';
+import '../providers/job_provider.dart';
 import '../providers/notifications_provider.dart';
 import '../services/firestore_service.dart';
 import '../theme.dart';
@@ -44,7 +43,7 @@ class JobFeedScreen extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.notifications_none_rounded),
                 onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.notifications),
+                    Navigator.pushNamed(context, '/notifications'),
               ),
               if (unreadCount > 0)
                 Positioned(
@@ -123,7 +122,7 @@ class JobFeedScreen extends ConsumerWidget {
         ],
         onDestinationSelected: (i) {
           if (i == 1) {
-            Navigator.pushNamed(context, AppRoutes.myApplications);
+            Navigator.pushNamed(context, '/myApplications');
           }
         },
       ),
@@ -141,7 +140,7 @@ class _JobCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         ref.read(selectedJobProvider.notifier).state = job;
-        Navigator.pushNamed(context, AppRoutes.jobDetails);
+        Navigator.pushNamed(context, '/jobDetails');
       },
       child: AppCard(
         child: Column(
@@ -220,55 +219,60 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
   Future<void> _apply(JobModel job) async {
     setState(() => _applying = true);
 
-    // Fetch current user profile for name/email
-    final uid =
-        ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
-    if (uid == null) {
+    final firebaseUser = ref.read(currentFirebaseUserProvider);
+    final userModel = ref.read(userProvider).valueOrNull;
+
+    if (firebaseUser == null) {
       setState(() => _applying = false);
       return;
     }
-    final userDoc = await FirestoreService.instance.getUser(uid);
 
-    final error = await ref
-        .read(applicationsNotifierProvider.notifier)
-        .apply(
-          jobId: job.id,
-          jobTitle: job.title,
-          companyName: job.companyName,
-          seekerName: userDoc?.fullName ?? 'Unknown',
-          seekerEmail: userDoc?.email ?? '',
-        );
-
-    setState(() => _applying = false);
-    if (!mounted) return;
-
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(error), backgroundColor: AppColors.coral),
+    try {
+      final now = DateTime.now();
+      final application = ApplicationModel(
+        id: '',
+        jobId: job.id,
+        jobTitle: job.title,
+        companyName: job.companyName,
+        employerId: job.employerId,
+        seekerId: firebaseUser.uid,
+        seekerName: userModel?.fullName ?? firebaseUser.displayName ?? '',
+        seekerEmail: firebaseUser.email ?? '',
+        status: ApplicationStatus.applied,
+        appliedAt: now,
+        updatedAt: now,
       );
-      return;
-    }
 
-    // Success
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Application Sent!'),
-        content: Text(
-            'You have applied for "${job.title}". '
-            'The employer will review your profile.'),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+      await FirestoreService.instance.applyForJob(application);
+
+      setState(() => _applying = false);
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Application Sent!'),
+          content: Text(
+              'You have applied for "${job.title}". '
+              'The employer will review your profile.'),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      setState(() => _applying = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.coral),
+      );
+    }
   }
 
   @override
@@ -513,7 +517,7 @@ class ChatScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: TextButton(
               onPressed: () =>
-                  Navigator.pushNamed(context, AppRoutes.rate),
+                  Navigator.pushNamed(context, '/rate'),
               child: const Text('Mark job complete →'),
             ),
           ),
@@ -600,7 +604,7 @@ class _RateScreenState extends ConsumerState<RateScreen> {
     setState(() => _submitting = false);
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(
-        context, AppRoutes.jobFeed, (r) => r.isFirst);
+        context, '/seekerDashboard', (r) => r.isFirst);
   }
 
   @override

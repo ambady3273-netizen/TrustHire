@@ -5,7 +5,7 @@ import '../core/routes/app_routes.dart';
 import '../models/job_model.dart';
 import '../models/user_model.dart';
 import '../providers/applications_provider.dart';
-import '../providers/jobs_provider.dart';
+import '../providers/job_provider.dart';
 import '../services/firestore_service.dart';
 import '../theme.dart';
 import '../widgets.dart';

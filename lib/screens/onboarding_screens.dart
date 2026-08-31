@@ -61,15 +61,8 @@ class SplashScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               TextButton(
-<<<<<<< HEAD
                 onPressed: () => Navigator.pushNamed(context, '/login'),
                 child: const Text('I already have an account', style: TextStyle(color: Colors.white70)),
-=======
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.login),
-                child: const Text('I already have an account',
-                    style: TextStyle(color: Colors.white70)),
->>>>>>> origin/user1
               ),
             ],
           ),
