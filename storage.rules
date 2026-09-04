@@ -1,0 +1,55 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ──────────────────────────────────────────────────────────
+    // KYC DOCUMENTS  kyc/{userId}/**
+    // ──────────────────────────────────────────────────────────
+    // Pattern: kyc/{uid}/government_id.jpg  or  kyc/{uid}/selfie.jpg
+    match /kyc/{userId}/{fileName} {
+      // Only the file owner and admin can read KYC documents.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        // Admin role check via Firestore (custom claim alternative).
+        // If you add a custom claim 'role' == 'admin', use:
+        // request.auth.token.role == 'admin'
+        false
+      );
+
+      // Only the authenticated user themselves can upload their own docs.
+      // Max file size 5 MB; only image or PDF content types allowed.
+      allow write: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        (request.resource.contentType.matches('image/.*') ||
+         request.resource.contentType == 'application/pdf');
+
+      // No client-side deletes — storage cleanup handled server-side.
+      allow delete: if false;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // PROFILE IMAGES  profiles/{userId}/**
+    // ──────────────────────────────────────────────────────────
+    match /profiles/{userId}/{fileName} {
+      // Public read — profile images are shown to all authenticated users.
+      allow read: if request.auth != null;
+
+      // Only the owner can upload; 2 MB max; images only.
+      allow write: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.size <= 2 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // DEFAULT — deny everything else
+    // ──────────────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+  }
+}

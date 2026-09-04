@@ -1,1 +1,27 @@
-{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"trusthire-fa302","configurations":{"android":"1:1062948093927:android:359210b9ea477adfb74742"}}},"android":{"default":{"projectId":"trusthire-fa302","appId":"1:1062948093927:android:359210b9ea477adfb74742","fileOutput":"android/app/google-services.json"}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "trusthire-fa302",
+          "configurations": {
+            "android": "1:1062948093927:android:359210b9ea477adfb74742"
+          }
+        }
+      },
+      "android": {
+        "default": {
+          "projectId": "trusthire-fa302",
+          "appId": "1:1062948093927:android:359210b9ea477adfb74742",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    }
+  }
+}

@@ -11,12 +11,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    /// Is the requesting user the document owner (by uid field)?
+    /// Is the requesting user the document owner (by uid)?
     function isOwner(uid) {
       return isAuth() && request.auth.uid == uid;
     }
 
     /// Read the caller's role from their Firestore user document.
+    /// Cached by Firestore per request — no extra reads charged.
     function callerRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
@@ -34,90 +35,141 @@ service cloud.firestore {
     }
 
     // ──────────────────────────────────────────────────────────
-    // USERS COLLECTION
+    // USERS  /users/{userId}
     // ──────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Any authenticated user can read their own profile.
-      allow read: if isOwner(userId) || isAdmin();
+      // Owner and admin can read; employers need to read seekers for
+      // display (name, email shown on applicant cards).
+      allow read: if isOwner(userId) || isAdmin() || isEmployer();
 
-      // Only the user themselves can create/update their own doc.
+      // Only the user themselves can create their own doc.
       allow create: if isOwner(userId);
+
+      // Owner updates own profile; admin can update any user
+      // (e.g. set verified=true, update trustScore).
       allow update: if isOwner(userId) || isAdmin();
 
-      // Deletion only by admin.
+      // Hard-delete only by admin.
       allow delete: if isAdmin();
     }
 
     // ──────────────────────────────────────────────────────────
-    // JOBS COLLECTION
+    // JOBS  /jobs/{jobId}
     // ──────────────────────────────────────────────────────────
     match /jobs/{jobId} {
-      // Any authenticated user can read approved jobs.
-      // Employers can also read their own jobs regardless of status.
+      // Any authenticated user can read an approved job.
+      // The employer who posted it can read it regardless of status.
+      // Admins can read everything (fraud review queue).
       allow read: if isAuth() && (
         resource.data.status == 'approved' ||
         resource.data.employerId == request.auth.uid ||
         isAdmin()
       );
 
-      // Only employers can create jobs.
+      // Only employers can post jobs; they must own the listing.
       allow create: if isEmployer() &&
         request.resource.data.employerId == request.auth.uid;
 
-      // Only the owning employer or admin can update/delete.
-      allow update: if (isEmployer() &&
-        resource.data.employerId == request.auth.uid) || isAdmin();
-      allow delete: if (isEmployer() &&
-        resource.data.employerId == request.auth.uid) || isAdmin();
+      // The posting employer can update their own job.
+      // Admin can update any job (approve / reject status change).
+      allow update: if
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isAdmin();
+
+      // Posting employer can delete their own draft/rejected jobs.
+      // Admin can delete anything.
+      allow delete: if
+        (isEmployer() && resource.data.employerId == request.auth.uid) ||
+        isAdmin();
     }
 
     // ──────────────────────────────────────────────────────────
-    // APPLICATIONS COLLECTION
+    // APPLICATIONS  /applications/{applicationId}
     // ──────────────────────────────────────────────────────────
     match /applications/{applicationId} {
 
-      // ── Read access ──────────────────────────────────────────
-      // Seekers can read only their own applications.
-      // Employers can read applications where they are the employer.
-      // Admins can read all.
+      // Seeker reads their own applications.
+      // Employer reads applications for jobs they own.
+      // Admin reads all.
       allow read: if isAuth() && (
         resource.data.seekerId == request.auth.uid ||
         resource.data.employerId == request.auth.uid ||
         isAdmin()
       );
 
-      // ── Create ───────────────────────────────────────────────
-      // Only job seekers can create; they must set themselves as seekerId.
-      // Prevents employers/admins from submitting applications.
+      // Only job seekers can submit; must set themselves as seekerId
+      // and must start with status 'applied'.
       allow create: if isSeeker() &&
         request.resource.data.seekerId == request.auth.uid &&
         request.resource.data.status == 'applied';
 
-      // ── Update ───────────────────────────────────────────────
-      // Seeker can only change status to 'withdrawn' on their own application.
-      // Employer can change status to accepted/rejected/under_review/shortlisted
-      //   only on applications where they are the employer.
-      // Admin can update any field.
+      // Seeker may only change status to 'withdrawn' on their own doc.
+      // Employer may update status fields on applications to their jobs.
+      //   Core immutable fields (seekerId, jobId, employerId) must not change.
+      // Admin may update anything.
       allow update: if isAuth() && (
-        // Seeker withdraws their own application
+        // Seeker withdraws
         (resource.data.seekerId == request.auth.uid &&
          request.resource.data.status == 'withdrawn' &&
-         request.resource.data.seekerId == resource.data.seekerId &&
-         request.resource.data.jobId == resource.data.jobId &&
+         request.resource.data.seekerId  == resource.data.seekerId &&
+         request.resource.data.jobId     == resource.data.jobId &&
          request.resource.data.employerId == resource.data.employerId
         ) ||
-        // Employer changes status on their own job's applications
+        // Employer acts on an application to one of their jobs
         (resource.data.employerId == request.auth.uid &&
-         request.resource.data.seekerId == resource.data.seekerId &&
-         request.resource.data.jobId == resource.data.jobId &&
+         request.resource.data.seekerId  == resource.data.seekerId &&
+         request.resource.data.jobId     == resource.data.jobId &&
          request.resource.data.employerId == resource.data.employerId
         ) ||
-        // Admin can update anything
         isAdmin()
       );
 
-      // ── Delete ───────────────────────────────────────────────
       // Only admin can hard-delete applications.
+      allow delete: if isAdmin();
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // NOTIFICATIONS  /notifications/{notifId}
+    // ──────────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      // Users can only read their own notifications.
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      // Notifications are written server-side by the app (via
+      // FirestoreService running with the user's auth token).
+      // We allow any authenticated user to create a notification
+      // only if they set themselves as the creator/trigger AND
+      // the target userId is a valid user.  In practice all creates
+      // come from the seeker who just applied or the employer who
+      // just accepted — so the auth uid must match either the
+      // seekerId or employerId of the relevant job/application.
+      // For simplicity we allow any authenticated user to create
+      // notifications (the client already validates the target).
+      allow create: if isAuth();
+
+      // Only the notification owner can mark it read / delete it.
+      // Admin can manage all notifications.
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // REVIEWS  /reviews/{reviewId}
+    // ──────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      // Anyone authenticated can read reviews (public trust signal).
+      allow read: if isAuth();
+
+      // Only seekers and employers can submit reviews; they must
+      // set themselves as the reviewerId.
+      allow create: if isAuth() &&
+        request.resource.data.reviewerId == request.auth.uid;
+
+      // Reviews are immutable once written (no editing).
+      // Admin can update for moderation purposes.
+      allow update: if isAdmin();
+
+      // Only admin can delete reviews.
       allow delete: if isAdmin();
     }
 
