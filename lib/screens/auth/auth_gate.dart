@@ -2,25 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-<<<<<<< HEAD
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme.dart';
-=======
-import '../../core/constants/app_constants.dart';
-import '../../providers/auth_provider.dart';
-import '../../services/firestore_service.dart';
->>>>>>> origin/user1
 import 'login_screen.dart';
 
 /// AuthGate — app entry point.
 ///
 /// Flow:
-///   loading          → spinner
-///   not signed in    → LoginScreen
-///   signed in + doc  → route by role
-///   signed in, no doc→ auto-create doc from Firebase Auth data → route
-///   Firestore error  → retry/logout screen
+///   loading           → spinner
+///   not signed in     → LoginScreen
+///   signed in + doc   → route by role
+///   signed in, no doc → auto-create doc from Firebase Auth data → route
+///   Firestore error   → retry/logout screen
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -42,14 +36,11 @@ class AuthGate extends ConsumerWidget {
         if (userModel == null) {
           final firebaseUser = ref.read(authServiceProvider).currentUser;
 
-          // Truly not logged in → show login
           if (firebaseUser == null) {
             return const LoginScreen();
           }
 
           // Firebase user exists but Firestore doc is missing.
-          // Auto-create the document from available Firebase Auth data
-          // so the user isn't blocked.
           return _AutoCreateProfileScreen(
             uid: firebaseUser.uid,
             email: firebaseUser.email ?? '',
@@ -58,29 +49,56 @@ class AuthGate extends ConsumerWidget {
           );
         }
 
-<<<<<<< HEAD
         // ── Signed in — route by role ─────────────────────────
         return _RoleRouter(role: userModel.role);
-=======
-        // Check email verification before routing.
-        final authService = ref.read(authServiceProvider);
-        if (!authService.isEmailVerified) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, '/verifyEmail');
-          });
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        return _HomeRedirect(uid: user.uid);
->>>>>>> origin/user1
       },
     );
   }
 }
 
-<<<<<<< HEAD
+// ─────────────────────────────────────────────────────────────
+// Role router
+// ─────────────────────────────────────────────────────────────
+
+class _RoleRouter extends StatefulWidget {
+  final String role;
+  const _RoleRouter({required this.role});
+
+  @override
+  State<_RoleRouter> createState() => _RoleRouterState();
+}
+
+class _RoleRouterState extends State<_RoleRouter> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final route = _routeForRole(widget.role);
+      if (route != null) Navigator.pushReplacementNamed(context, route);
+    });
+  }
+
+  String? _routeForRole(String role) {
+    switch (role) {
+      case 'job_seeker':
+        return '/seekerDashboard';
+      case 'employer':
+        return '/employerDashboard';
+      case 'admin':
+        return '/adminDashboard';
+      default:
+        return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_routeForRole(widget.role) != null) return const _LoadingScreen();
+    return _UnknownRoleScreen(role: widget.role);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // Auto-create profile when Firestore doc is missing
 // ─────────────────────────────────────────────────────────────
@@ -97,21 +115,12 @@ class _AutoCreateProfileScreen extends ConsumerStatefulWidget {
     required this.displayName,
     required this.onLogout,
   });
-=======
-/// Fetches the user's role from Firestore and redirects to the
-/// appropriate home screen. Avoids hardcoding a single route for
-/// all roles.
-class _HomeRedirect extends StatefulWidget {
-  final String uid;
-  const _HomeRedirect({required this.uid});
->>>>>>> origin/user1
 
   @override
   ConsumerState<_AutoCreateProfileScreen> createState() =>
       _AutoCreateProfileScreenState();
 }
 
-<<<<<<< HEAD
 class _AutoCreateProfileScreenState
     extends ConsumerState<_AutoCreateProfileScreen> {
   bool _isCreating = false;
@@ -141,32 +150,12 @@ class _AutoCreateProfileScreenState
         lastLogin: now,
       );
       await firestore.createUser(user);
-
-      // Invalidate userProvider so AuthGate re-evaluates with the new doc.
       if (mounted) ref.invalidate(userProvider);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }
-=======
-class _HomeRedirectState extends State<_HomeRedirect> {
-  @override
-  void initState() {
-    super.initState();
-    _redirect();
-  }
-
-  Future<void> _redirect() async {
-    final user = await FirestoreService.instance.getUser(widget.uid);
-
-    if (!mounted) return;
-
-    final role = user?.role ?? AppConstants.roleJobSeeker;
-    final route = AppConstants.homeRouteForRole(role);
-
-    Navigator.pushReplacementNamed(context, route);
->>>>>>> origin/user1
   }
 
   @override
@@ -197,8 +186,6 @@ class _HomeRedirectState extends State<_HomeRedirect> {
                 style: const TextStyle(color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 28),
-
-              // Role selector
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(
@@ -217,16 +204,13 @@ class _HomeRedirectState extends State<_HomeRedirect> {
                     ? null
                     : (v) => setState(() => _selectedRole = v.first),
               ),
-
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!,
                     style: const TextStyle(color: AppColors.coral),
                     textAlign: TextAlign.center),
               ],
-
               const SizedBox(height: 28),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -280,50 +264,6 @@ class _HomeRedirectState extends State<_HomeRedirect> {
     );
   }
 }
-<<<<<<< HEAD
-
-// ─────────────────────────────────────────────────────────────
-// Role router
-// ─────────────────────────────────────────────────────────────
-
-class _RoleRouter extends StatefulWidget {
-  final String role;
-  const _RoleRouter({required this.role});
-
-  @override
-  State<_RoleRouter> createState() => _RoleRouterState();
-}
-
-class _RoleRouterState extends State<_RoleRouter> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final route = _routeForRole(widget.role);
-      if (route != null) Navigator.pushReplacementNamed(context, route);
-    });
-  }
-
-  String? _routeForRole(String role) {
-    switch (role) {
-      case 'job_seeker':
-        return '/seekerDashboard';
-      case 'employer':
-        return '/employerDashboard';
-      case 'admin':
-        return '/adminDashboard';
-      default:
-        return null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_routeForRole(widget.role) != null) return const _LoadingScreen();
-    return _UnknownRoleScreen(role: widget.role);
-  }
-}
 
 // ─────────────────────────────────────────────────────────────
 // Helper screens
@@ -360,7 +300,8 @@ class _ErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.coral),
+              const Icon(Icons.error_outline,
+                  size: 64, color: AppColors.coral),
               const SizedBox(height: 20),
               const Text('Connection Error',
                   style: TextStyle(
@@ -370,7 +311,8 @@ class _ErrorScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.mute, height: 1.5)),
+                  style: const TextStyle(
+                      color: AppColors.mute, height: 1.5)),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -442,7 +384,8 @@ class _UnknownRoleScreen extends StatelessWidget {
                 'Your account has an unrecognised role: "$role". '
                 'Please contact support or log out and register again.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.mute, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -474,5 +417,3 @@ class _UnknownRoleScreen extends StatelessWidget {
     );
   }
 }
-=======
->>>>>>> origin/user1

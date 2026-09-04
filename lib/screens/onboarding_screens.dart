@@ -47,29 +47,20 @@ class SplashScreen extends StatelessWidget {
                 'Verified employers. Protected pay.\nReal part-time work, near you.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Color(0xFFC9D2E6),
-                    fontSize: 13.5,
-                    height: 1.5),
+                    color: Color(0xFFC9D2E6), fontSize: 13.5, height: 1.5),
               ),
               const Spacer(),
               PrimaryButton(
                 label: 'Get started',
                 color: AppColors.marigold,
                 textColor: AppColors.inkDark,
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.role),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.role),
               ),
               const SizedBox(height: 10),
               TextButton(
-<<<<<<< HEAD
                 onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: const Text('I already have an account', style: TextStyle(color: Colors.white70)),
-=======
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.login),
                 child: const Text('I already have an account',
                     style: TextStyle(color: Colors.white70)),
->>>>>>> origin/user1
               ),
             ],
           ),
@@ -127,8 +118,7 @@ class RoleSelectScreen extends StatelessWidget {
             const Spacer(),
             PrimaryButton(
               label: 'Continue',
-              onTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.kyc),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.kyc),
             ),
           ],
         ),
@@ -202,14 +192,14 @@ class _KycScreenState extends ConsumerState<KycScreen> {
   final _picker = ImagePicker();
 
   Future<void> _pickId() async {
-    final picked =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked = await _picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 80);
     if (picked != null) setState(() => _idFile = File(picked.path));
   }
 
   Future<void> _pickSelfie() async {
-    final picked =
-        await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    final picked = await _picker.pickImage(
+        source: ImageSource.camera, imageQuality: 80);
     if (picked != null) setState(() => _selfieFile = File(picked.path));
   }
 
@@ -225,26 +215,19 @@ class _KycScreenState extends ConsumerState<KycScreen> {
     });
 
     try {
-      final uid =
-          ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
+      final uid = ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
       if (uid == null) throw Exception('Not logged in');
 
       final storage = FirebaseStorage.instance;
 
-      // Upload government ID
-      final idRef =
-          storage.ref('kyc/$uid/government_id.jpg');
+      final idRef = storage.ref('kyc/$uid/government_id.jpg');
       await idRef.putFile(_idFile!);
       final idUrl = await idRef.getDownloadURL();
 
-      // Upload selfie
-      final selfieRef =
-          storage.ref('kyc/$uid/selfie.jpg');
+      final selfieRef = storage.ref('kyc/$uid/selfie.jpg');
       await selfieRef.putFile(_selfieFile!);
 
-      // Save ID URL to user profile; mark as pending review
-      await FirestoreService.instance
-          .updateProfileImage(uid, idUrl);
+      await FirestoreService.instance.updateProfileImage(uid, idUrl);
 
       if (mounted) {
         Navigator.pushNamed(context, AppRoutes.trustIntro);
@@ -268,17 +251,13 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             const AppBadge('Step 2 of 3', type: BadgeType.ink),
             const SizedBox(height: 12),
             const Text(
-                "Upload your ID and take a selfie. "
-                "This unlocks your Trust Ring.",
-                style:
-                    TextStyle(fontSize: 12, color: AppColors.mute)),
+                'Upload your ID and take a selfie. This unlocks your Trust Ring.',
+                style: TextStyle(fontSize: 12, color: AppColors.mute)),
             const SizedBox(height: 18),
             const LabelSmall('Government ID'),
             _UploadBox(
               icon: Icons.description_outlined,
-              title: _idFile == null
-                  ? 'Upload Aadhaar / PAN'
-                  : '✓ ID selected',
+              title: _idFile == null ? 'Upload Aadhaar / PAN' : '✓ ID selected',
               subtitle: 'JPG or PNG · under 5 MB',
               picked: _idFile != null,
               onTap: _uploading ? null : _pickId,
@@ -287,9 +266,8 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             const LabelSmall('Selfie match'),
             _UploadBox(
               icon: Icons.face_retouching_natural,
-              title: _selfieFile == null
-                  ? 'Take a live selfie'
-                  : '✓ Selfie captured',
+              title:
+                  _selfieFile == null ? 'Take a live selfie' : '✓ Selfie captured',
               subtitle: 'Camera · matched against your ID',
               picked: _selfieFile != null,
               onTap: _uploading ? null : _pickSelfie,
@@ -297,20 +275,16 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             if (_error != null) ...[
               const SizedBox(height: 10),
               Text(_error!,
-                  style: const TextStyle(
-                      color: AppColors.coral, fontSize: 12)),
+                  style: const TextStyle(color: AppColors.coral, fontSize: 12)),
             ],
             const Spacer(),
             const Center(
               child: Text('Reviewed within 24 hours',
-                  style:
-                      TextStyle(fontSize: 11, color: AppColors.mute)),
+                  style: TextStyle(fontSize: 11, color: AppColors.mute)),
             ),
             const SizedBox(height: 10),
             PrimaryButton(
-              label: _uploading
-                  ? 'Uploading…'
-                  : 'Submit for verification',
+              label: _uploading ? 'Uploading…' : 'Submit for verification',
               onTap: _uploading ? null : _submit,
             ),
           ],
@@ -341,12 +315,9 @@ class _UploadBox extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-            vertical: 22, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 14),
         decoration: BoxDecoration(
-          color: picked
-              ? AppColors.tealLight
-              : Colors.white,
+          color: picked ? AppColors.tealLight : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: picked ? AppColors.teal : AppColors.border,
@@ -356,20 +327,16 @@ class _UploadBox extends StatelessWidget {
         child: Column(
           children: [
             Icon(icon,
-                color: picked ? AppColors.teal : AppColors.mute,
-                size: 26),
+                color: picked ? AppColors.teal : AppColors.mute, size: 26),
             const SizedBox(height: 6),
             Text(title,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: picked
-                        ? AppColors.teal
-                        : AppColors.ink)),
+                    color: picked ? AppColors.teal : AppColors.ink)),
             const SizedBox(height: 2),
             Text(subtitle,
-                style: const TextStyle(
-                    fontSize: 10, color: AppColors.mute)),
+                style: const TextStyle(fontSize: 10, color: AppColors.mute)),
           ],
         ),
       ),
@@ -392,8 +359,7 @@ class TrustIntroScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const AppBadge('✓ Identity confirmed',
-                type: BadgeType.verified),
+            const AppBadge('✓ Identity confirmed', type: BadgeType.verified),
             const SizedBox(height: 18),
             const TrustRing(percent: 35, size: 92),
             const SizedBox(height: 16),
@@ -407,8 +373,7 @@ class TrustIntroScreen extends StatelessWidget {
               "It grows as you complete jobs, collect reviews, "
               "and stay complaint-free. Everyone you work with can see it.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 12, color: AppColors.mute, height: 1.5),
+              style: TextStyle(fontSize: 12, color: AppColors.mute, height: 1.5),
             ),
             const SizedBox(height: 18),
             AppCard(
@@ -422,12 +387,8 @@ class TrustIntroScreen extends StatelessWidget {
                           color: AppColors.ink)),
                   SizedBox(height: 8),
                   _GrowRow(label: '✓ ID verified', points: '+20'),
-                  _GrowRow(
-                      label: 'Complete your first job',
-                      points: '+15'),
-                  _GrowRow(
-                      label: 'Get 5 reviews above 4★',
-                      points: '+15'),
+                  _GrowRow(label: 'Complete your first job', points: '+15'),
+                  _GrowRow(label: 'Get 5 reviews above 4★', points: '+15'),
                 ],
               ),
             ),
@@ -437,7 +398,7 @@ class TrustIntroScreen extends StatelessWidget {
               color: AppColors.marigold,
               textColor: AppColors.inkDark,
               onTap: () => Navigator.pushNamedAndRemoveUntil(
-                  context, AppRoutes.jobFeed, (r) => r.isFirst),
+                  context, AppRoutes.seekerDashboard, (r) => r.isFirst),
             ),
           ],
         ),
@@ -459,8 +420,7 @@ class _GrowRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11.5, color: AppColors.mute)),
+              style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
           Text(points,
               style: const TextStyle(
                   fontSize: 11.5,
