@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../models/application_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../services/notification_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 

@@ -68,11 +68,11 @@ class AdminDashboard extends ConsumerWidget {
           Builder(
             builder: (context) {
               final flagged = ref.watch(adminFlaggedCountProvider)
-                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+                  .maybeWhen(data: (n) => '$n', orElse: () => '…');
               final kyc = ref.watch(adminPendingKycCountProvider)
-                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+                  .maybeWhen(data: (n) => '$n', orElse: () => '…');
               final cleared = ref.watch(adminApprovedCountProvider)
-                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+                  .maybeWhen(data: (n) => '$n', orElse: () => '…');
               return Row(
                 children: [
                   Expanded(
@@ -101,8 +101,6 @@ class AdminDashboard extends ConsumerWidget {
                 ],
               );
             },
-          ),
-            ],
           ),
 
           const SizedBox(height: 28),
