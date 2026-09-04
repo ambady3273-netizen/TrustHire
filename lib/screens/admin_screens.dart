@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,7 @@ import '../models/user_model.dart';
 import '../providers/applications_provider.dart';
 import '../providers/job_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -151,6 +153,12 @@ class _FraudJobCard extends StatelessWidget {
                   onTap: () async {
                     await FirestoreService.instance
                         .updateJobStatus(job.id, 'approved');
+                    // Notify employer
+                    unawaited(NotificationService.instance.jobApproved(
+                      employerId: job.employerId,
+                      jobTitle: job.title,
+                      jobId: job.id,
+                    ));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -168,6 +176,12 @@ class _FraudJobCard extends StatelessWidget {
                   onTap: () async {
                     await FirestoreService.instance
                         .updateJobStatus(job.id, 'rejected');
+                    // Notify employer
+                    unawaited(NotificationService.instance.jobRejected(
+                      employerId: job.employerId,
+                      jobTitle: job.title,
+                      jobId: job.id,
+                    ));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -325,6 +339,10 @@ class _VerificationCard extends StatelessWidget {
                   onTap: () async {
                     await FirestoreService.instance
                         .verifyUser(user.uid, true);
+                    // Notify user their KYC passed
+                    unawaited(NotificationService.instance.kycApproved(
+                      userId: user.uid,
+                    ));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

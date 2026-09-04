@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/job_provider.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -63,32 +64,44 @@ class AdminDashboard extends ConsumerWidget {
           ),
           const SizedBox(height: 28),
 
-          // Stats row
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  value: '23',
-                  label: 'Flagged Today',
-                  color: AppColors.coral,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _StatTile(
-                  value: '7',
-                  label: 'Pending KYC',
-                  color: AppColors.marigoldDark,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _StatTile(
-                  value: '318',
-                  label: 'Auto-cleared',
-                  color: AppColors.teal,
-                ),
-              ),
+                    // Stats row — live from Firestore
+          Builder(
+            builder: (context) {
+              final flagged = ref.watch(adminFlaggedCountProvider)
+                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+              final kyc = ref.watch(adminPendingKycCountProvider)
+                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+              final cleared = ref.watch(adminApprovedCountProvider)
+                  .maybeWhen(data: (n) => '{n}', orElse: () => '…');
+              return Row(
+                children: [
+                  Expanded(
+                    child: _StatTile(
+                      value: flagged,
+                      label: 'Flagged',
+                      color: AppColors.coral,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _StatTile(
+                      value: kyc,
+                      label: 'Pending KYC',
+                      color: AppColors.marigoldDark,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _StatTile(
+                      value: cleared,
+                      label: 'Approved',
+                      color: AppColors.teal,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
             ],
           ),
 

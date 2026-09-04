@@ -573,7 +573,16 @@ class _RateScreenState extends ConsumerState<RateScreen> {
       );
       try {
         await FirestoreService.instance.submitReview(review);
-      } catch (_) {}
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not save review: $e'),
+              backgroundColor: AppColors.coral,
+            ),
+          );
+        }
+      }
     }
 
     setState(() => _submitting = false);

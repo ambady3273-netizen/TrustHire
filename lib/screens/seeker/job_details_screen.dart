@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ import '../../widgets.dart';
 
 /// Full job details screen.
 /// Reads the selected job from [selectedJobProvider].
-/// Only job seekers see the Apply button — employers and admins do not.
+/// Only job seekers see the Apply button â€” employers and admins do not.
 class JobDetailsScreen extends ConsumerStatefulWidget {
   const JobDetailsScreen({super.key});
 
@@ -76,6 +77,22 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
       );
 
       await firestore.applyForJob(application);
+      // Notify the seeker and employer simultaneously (fire-and-forget).
+      final ns = NotificationService.instance;
+      unawaited(ns.applicationSubmitted(
+        seekerId: application.seekerId,
+        jobTitle: application.jobTitle,
+        companyName: application.companyName,
+        jobId: application.jobId,
+      ));
+      unawaited(ns.newApplicant(
+        employerId: application.employerId,
+        seekerName: application.seekerName.isNotEmpty
+            ? application.seekerName
+            : 'A seeker',
+        jobTitle: application.jobTitle,
+        jobId: application.jobId,
+      ));
 
       if (!mounted) return;
       await _checkExistingApplication();
@@ -125,7 +142,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
         children: [
           AppBadge(
-            isVerified ? '✓ Passed AI fraud check' : '⚠ Under admin review',
+            isVerified ? 'âœ“ Passed AI fraud check' : 'âš  Under admin review',
             type: isVerified ? BadgeType.verified : BadgeType.warn,
           ),
           const SizedBox(height: 10),
@@ -136,7 +153,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${job.companyName} · ${job.location}',
+            '${job.companyName} Â· ${job.location}',
             style: const TextStyle(fontSize: 12, color: AppColors.mute),
           ),
           const SizedBox(height: 16),
@@ -175,10 +192,10 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
               children: [
                 const LabelSmall('Job Details'),
                 _kv('Category', job.category),
-                _kv('Salary', '₹${job.salary.toStringAsFixed(0)}'),
+                _kv('Salary', 'â‚¹${job.salary.toStringAsFixed(0)}'),
                 _kv('Location', job.location),
                 _kv('Contact', job.contact),
-                _kv('Payment protection', '🔒 Escrow protected',
+                _kv('Payment protection', 'ðŸ”’ Escrow protected',
                     valueColor: AppColors.teal),
               ],
             ),
@@ -216,7 +233,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                   const SizedBox(height: 8),
                   ...job.scamReasons.map((r) => Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: Text('• $r',
+                        child: Text('â€¢ $r',
                             style: const TextStyle(
                                 fontSize: 11.5,
                                 color: AppColors.mute,
@@ -240,7 +257,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                     child: Text(
                       userModel.role == 'employer'
                           ? 'You are viewing as an employer. Switch to a job seeker account to apply.'
-                          : 'Admin view — applications are read-only.',
+                          : 'Admin view â€” applications are read-only.',
                       style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.teal,
@@ -253,7 +270,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
         ],
       ),
 
-      // Apply button — only for job seekers
+      // Apply button â€” only for job seekers
       bottomSheet: isSeeker ? _buildApplyButton() : const SizedBox.shrink(),
     );
   }
@@ -276,11 +293,11 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
       switch (status) {
         case ApplicationStatus.accepted:
           statusColor = AppColors.teal;
-          statusLabel = '✓ Application Accepted';
+          statusLabel = 'âœ“ Application Accepted';
           break;
         case ApplicationStatus.rejected:
           statusColor = AppColors.coral;
-          statusLabel = '✗ Application Rejected';
+          statusLabel = 'âœ— Application Rejected';
           break;
         case ApplicationStatus.withdrawn:
           statusColor = AppColors.mute;
@@ -288,15 +305,15 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
           break;
         case ApplicationStatus.shortlisted:
           statusColor = AppColors.ink;
-          statusLabel = '★ Shortlisted';
+          statusLabel = 'â˜… Shortlisted';
           break;
         case ApplicationStatus.underReview:
           statusColor = AppColors.marigoldDark;
-          statusLabel = '🔍 Under Review';
+          statusLabel = 'ðŸ” Under Review';
           break;
         default:
           statusColor = AppColors.marigoldDark;
-          statusLabel = '⏳ Applied — Pending Review';
+          statusLabel = 'â³ Applied â€” Pending Review';
       }
 
       return Container(
@@ -370,3 +387,4 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
     );
   }
 }
+

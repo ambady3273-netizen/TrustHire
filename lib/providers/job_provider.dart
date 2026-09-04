@@ -68,6 +68,28 @@ final pendingJobsProvider = StreamProvider<List<JobModel>>((ref) {
 });
 
 // ============================================================
+// ADMIN STAT PROVIDERS — live counts for admin dashboard
+// ============================================================
+
+/// Live count of jobs currently in pending_review (flagged for admin).
+final adminFlaggedCountProvider = StreamProvider<int>((ref) {
+  final firestore = ref.watch(firestoreServiceProvider);
+  return firestore.getPendingReviewJobs().map((list) => list.length);
+});
+
+/// Live count of users whose KYC is not yet verified.
+final adminPendingKycCountProvider = StreamProvider<int>((ref) {
+  final firestore = ref.watch(firestoreServiceProvider);
+  return firestore.getUnverifiedUsers().map((list) => list.length);
+});
+
+/// Live count of jobs that have been approved (auto-cleared by AI or admin).
+final adminApprovedCountProvider = StreamProvider<int>((ref) {
+  final firestore = ref.watch(firestoreServiceProvider);
+  return firestore.getApprovedJobs().map((list) => list.length);
+});
+
+// ============================================================
 // JOB-SPECIFIC APPLICATIONS — for a single job (employer view)
 // ============================================================
 

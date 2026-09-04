@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../models/application_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../services/notification_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -137,6 +139,24 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
       await ref
           .read(firestoreServiceProvider)
           .updateApplicationStatus(widget.application.id, newStatus);
+      // Fire notification to the seeker.
+      final ns = NotificationService.instance;
+      final app = widget.application;
+      if (isAccept) {
+        unawaited(ns.applicationAccepted(
+          seekerId: app.seekerId,
+          jobTitle: app.jobTitle,
+          companyName: app.companyName,
+          applicationId: app.id,
+        ));
+      } else {
+        unawaited(ns.applicationRejected(
+          seekerId: app.seekerId,
+          jobTitle: app.jobTitle,
+          companyName: app.companyName,
+          applicationId: app.id,
+        ));
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
