@@ -1,5 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// KYC status constants — single source of truth.
+class KycStatus {
+  static const String none = 'none';
+  static const String submitted = 'submitted';
+  static const String verified = 'verified';
+  static const String rejected = 'rejected';
+}
+
 class UserModel {
   final String uid;
   final String fullName;
@@ -11,6 +19,16 @@ class UserModel {
   final Timestamp createdAt;
   final Timestamp lastLogin;
 
+  // ── KYC fields ─────────────────────────────────────────────
+  /// One of: none | submitted | verified | rejected
+  final String kycStatus;
+  final String governmentIdUrl;
+  final String selfieUrl;
+  final Timestamp? kycSubmittedAt;
+  final Timestamp? kycVerifiedAt;
+  final String kycVerifiedBy;   // admin UID who verified/rejected
+  final String kycRejectReason; // populated when kycStatus == rejected
+
   UserModel({
     required this.uid,
     required this.fullName,
@@ -21,6 +39,13 @@ class UserModel {
     required this.profileImage,
     required this.createdAt,
     required this.lastLogin,
+    this.kycStatus = KycStatus.none,
+    this.governmentIdUrl = '',
+    this.selfieUrl = '',
+    this.kycSubmittedAt,
+    this.kycVerifiedAt,
+    this.kycVerifiedBy = '',
+    this.kycRejectReason = '',
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -34,6 +59,13 @@ class UserModel {
       profileImage: map['profileImage'] ?? '',
       createdAt: map['createdAt'] ?? Timestamp.now(),
       lastLogin: map['lastLogin'] ?? Timestamp.now(),
+      kycStatus: map['kycStatus'] ?? KycStatus.none,
+      governmentIdUrl: map['governmentIdUrl'] ?? '',
+      selfieUrl: map['selfieUrl'] ?? '',
+      kycSubmittedAt: map['kycSubmittedAt'] as Timestamp?,
+      kycVerifiedAt: map['kycVerifiedAt'] as Timestamp?,
+      kycVerifiedBy: map['kycVerifiedBy'] ?? '',
+      kycRejectReason: map['kycRejectReason'] ?? '',
     );
   }
 
@@ -48,6 +80,13 @@ class UserModel {
       'profileImage': profileImage,
       'createdAt': createdAt,
       'lastLogin': lastLogin,
+      'kycStatus': kycStatus,
+      'governmentIdUrl': governmentIdUrl,
+      'selfieUrl': selfieUrl,
+      'kycSubmittedAt': kycSubmittedAt,
+      'kycVerifiedAt': kycVerifiedAt,
+      'kycVerifiedBy': kycVerifiedBy,
+      'kycRejectReason': kycRejectReason,
     };
   }
 
@@ -61,6 +100,13 @@ class UserModel {
     String? profileImage,
     Timestamp? createdAt,
     Timestamp? lastLogin,
+    String? kycStatus,
+    String? governmentIdUrl,
+    String? selfieUrl,
+    Timestamp? kycSubmittedAt,
+    Timestamp? kycVerifiedAt,
+    String? kycVerifiedBy,
+    String? kycRejectReason,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -72,6 +118,13 @@ class UserModel {
       profileImage: profileImage ?? this.profileImage,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
+      kycStatus: kycStatus ?? this.kycStatus,
+      governmentIdUrl: governmentIdUrl ?? this.governmentIdUrl,
+      selfieUrl: selfieUrl ?? this.selfieUrl,
+      kycSubmittedAt: kycSubmittedAt ?? this.kycSubmittedAt,
+      kycVerifiedAt: kycVerifiedAt ?? this.kycVerifiedAt,
+      kycVerifiedBy: kycVerifiedBy ?? this.kycVerifiedBy,
+      kycRejectReason: kycRejectReason ?? this.kycRejectReason,
     );
   }
 }

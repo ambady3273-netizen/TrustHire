@@ -25,7 +25,11 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
 // USER MODEL PROVIDER
 // Watches the Firebase auth state; when a user is signed in it
 // fetches (and re-fetches on change) their Firestore document.
-// Yields AsyncValue<UserModel?> — null means "not signed in".
+// Yields AsyncValue<UserModel?> — null means "not signed in"
+// OR "doc does not exist yet".
+// This stream never throws — errors are caught and treated as
+// null so AuthGate can show the profile-creation screen instead
+// of a hard error screen.
 // ============================================================
 
 final userProvider = StreamProvider<UserModel?>((ref) async* {
@@ -38,9 +42,12 @@ final userProvider = StreamProvider<UserModel?>((ref) async* {
       yield null;
     } else {
       // Attempt to load the Firestore document.
+      // Return null (not an error) if the doc is missing or
+      // permissions are denied — AuthGate handles this case by
+      // showing the auto-create-profile screen.
       try {
         final userModel = await firestoreService.getUser(firebaseUser.uid);
-        yield userModel; // may be null if doc doesn't exist yet
+        yield userModel;
       } catch (_) {
         yield null;
       }

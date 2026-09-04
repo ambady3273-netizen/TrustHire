@@ -30,6 +30,11 @@ class SeekerDashboard extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Messages',
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () => Navigator.pushNamed(context, '/chats'),
+          ),
+          IconButton(
             tooltip: 'My Applications',
             icon: const Icon(Icons.receipt_long_outlined),
             onPressed: () =>

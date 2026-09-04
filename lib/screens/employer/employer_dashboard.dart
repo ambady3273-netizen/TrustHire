@@ -145,6 +145,14 @@ class EmployerDashboard extends ConsumerWidget {
             subtitle: 'Manage secure escrow payments',
             onTap: () => Navigator.pushNamed(context, '/escrow'),
           ),
+          const SizedBox(height: 14),
+          _QuickAction(
+            icon: Icons.chat_bubble_outline,
+            color: AppColors.teal,
+            label: 'Messages',
+            subtitle: 'Chat with accepted applicants',
+            onTap: () => Navigator.pushNamed(context, '/chats'),
+          ),
 
           const SizedBox(height: 32),
 

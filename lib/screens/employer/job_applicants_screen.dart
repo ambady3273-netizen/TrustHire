@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/application_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
 import '../../screens/employer/employer_jobs_screen.dart'
     show selectedEmployerJobProvider;
@@ -182,6 +183,21 @@ class _ApplicantCard extends ConsumerStatefulWidget {
 class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
   bool _isUpdating = false;
 
+  Future<void> _openChat(
+      BuildContext ctx, WidgetRef ref, ApplicationModel app) async {
+    final fs = ref.read(firestoreServiceProvider);
+    final chat = await fs.getChatForApplication(app.id);
+    if (!ctx.mounted) return;
+    if (chat != null) {
+      ref.read(selectedChatProvider.notifier).state = chat;
+      Navigator.pushNamed(ctx, '/chatScreen');
+    } else {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        const SnackBar(content: Text('Chat not found. Try again.')),
+      );
+    }
+  }
+
   Future<void> _confirmAndUpdate(String newStatus) async {
     final isAccept = newStatus == ApplicationStatus.accepted;
     final name = widget.application.seekerName.isNotEmpty
@@ -194,7 +210,7 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
         title: Text(isAccept ? 'Accept Applicant?' : 'Reject Applicant?'),
         content: Text(
           isAccept
-              ? 'Accept $name for this role? They will see their updated status.'
+              ? 'Accept $name for this role? They will see their updated status and a chat will be created.'
               : 'Reject $name? This action updates their application status.',
         ),
         actions: [
@@ -217,13 +233,22 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
 
     setState(() => _isUpdating = true);
     try {
-      await ref
-          .read(firestoreServiceProvider)
-          .updateApplicationStatus(widget.application.id, newStatus);
+      final fs = ref.read(firestoreServiceProvider);
+      await fs.updateApplicationStatus(widget.application.id, newStatus);
+
+      // Auto-create chat when accepting.
+      if (isAccept) {
+        final userModel = ref.read(userProvider).valueOrNull;
+        await fs.createChatForApplication(
+          application: widget.application,
+          employerName: userModel?.fullName ?? 'Employer',
+        );
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(isAccept
-            ? '$name has been accepted!'
+            ? '$name has been accepted! A chat has been created.'
             : '$name has been rejected.'),
         backgroundColor: isAccept ? AppColors.teal : AppColors.coral,
       ));
@@ -314,6 +339,24 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                       ),
                     ],
                   ),
+          ],
+          // Chat button for accepted applicants
+          if (isAccepted) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _openChat(context, ref, app),
+                icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                label: const Text('Open Chat'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.teal,
+                  side: const BorderSide(color: AppColors.teal),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
           ],
         ],
       ),

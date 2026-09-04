@@ -111,10 +111,19 @@ class _AutoCreateProfileScreenState
       );
       await firestore.createUser(user);
 
-      // Invalidate userProvider so AuthGate re-evaluates with the new doc.
-      if (mounted) ref.invalidate(userProvider);
+      // Wait briefly for Firestore to propagate, then re-read.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      // Invalidate so the AuthGate StreamProvider re-fetches the
+      // new document and routes the user to their dashboard.
+      if (mounted) {
+        ref.invalidate(userProvider);
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() => _error = 'Failed to create profile: ${e.toString()}\n\n'
+            'Please check your internet connection and try again.');
+      }
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }

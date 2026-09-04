@@ -4,7 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../../models/application_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../screens/shared/rating_screen.dart'
+    show selectedApplicationForRatingProvider;
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -41,8 +44,9 @@ class MyApplicationsScreen extends ConsumerWidget {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.ink,
-                      foregroundColor: Colors.white),
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -61,9 +65,10 @@ class MyApplicationsScreen extends ConsumerWidget {
                     SizedBox(height: 16),
                     Text(
                       "You haven't applied to any jobs yet.\n"
-                      'Browse the job feed to get started!',
+                          'Browse the job feed to get started!',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.mute, height: 1.5),
+                      style:
+                          TextStyle(color: AppColors.mute, height: 1.5),
                     ),
                   ],
                 ),
@@ -83,12 +88,15 @@ class MyApplicationsScreen extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+
 class _ApplicationCard extends ConsumerStatefulWidget {
   final ApplicationModel application;
   const _ApplicationCard({required this.application});
 
   @override
-  ConsumerState<_ApplicationCard> createState() => _ApplicationCardState();
+  ConsumerState<_ApplicationCard> createState() =>
+      _ApplicationCardState();
 }
 
 class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
@@ -110,7 +118,8 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.coral),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.coral),
             child: const Text('Withdraw'),
           ),
         ],
@@ -142,9 +151,25 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
     }
   }
 
+  Future<void> _openChat() async {
+    final fs = ref.read(firestoreServiceProvider);
+    final chat =
+        await fs.getChatForApplication(widget.application.id);
+    if (!mounted) return;
+    if (chat != null) {
+      ref.read(selectedChatProvider.notifier).state = chat;
+      Navigator.pushNamed(context, '/chatScreen');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chat not available yet.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = widget.application;
+
     final Color statusColor;
     final BadgeType badgeType;
 
@@ -170,41 +195,50 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
     }
 
     final canWithdraw = ApplicationStatus.isWithdrawable(app.status);
+    final isAcceptedOrDone = app.status == ApplicationStatus.accepted ||
+        app.status == ApplicationStatus.completed;
 
     return AppCard(
       borderColor: statusColor.withAlpha(80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title + badge
+          // ── Title + badge ─────────────────────────────
           Row(
             children: [
               Expanded(
                 child: Text(
                   app.jobTitle,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
-                      color: AppColors.ink),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: AppColors.ink,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
-              AppBadge(ApplicationStatus.label(app.status), type: badgeType),
+              AppBadge(
+                ApplicationStatus.label(app.status),
+                type: badgeType,
+              ),
             ],
           ),
           const SizedBox(height: 4),
 
-          // Company
-          Text(app.companyName,
-              style: const TextStyle(
-                  fontSize: 11.5, color: AppColors.mute)),
+          // ── Company ───────────────────────────────────
+          Text(
+            app.companyName,
+            style: const TextStyle(
+                fontSize: 11.5, color: AppColors.mute),
+          ),
           const SizedBox(height: 6),
 
-          // Dates
+          // ── Dates ─────────────────────────────────────
           Row(
             children: [
-              const Icon(Icons.schedule, size: 12, color: AppColors.mute),
+              const Icon(Icons.schedule,
+                  size: 12, color: AppColors.mute),
               const SizedBox(width: 4),
               Text(
                 'Applied ${DateFormat('d MMM yyyy').format(app.appliedAt)}',
@@ -212,7 +246,8 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
                     fontSize: 11, color: AppColors.mute),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.update, size: 12, color: AppColors.mute),
+              const Icon(Icons.update,
+                  size: 12, color: AppColors.mute),
               const SizedBox(width: 4),
               Text(
                 'Updated ${DateFormat('d MMM yyyy').format(app.updatedAt)}',
@@ -222,27 +257,91 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
             ],
           ),
 
-          // Withdraw button (only when still actionable)
+          // ── Chat + Rate (accepted / completed) ────────
+          if (isAcceptedOrDone) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _openChat,
+                    icon: const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 15),
+                    label: const Text('Chat'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.teal,
+                      side: const BorderSide(
+                          color: AppColors.teal),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(
+                              selectedApplicationForRatingProvider
+                                  .notifier)
+                          .state = app;
+                      Navigator.pushNamed(context, '/rateScreen');
+                    },
+                    icon: const Icon(
+                        Icons.star_outline_rounded,
+                        size: 15),
+                    label: const Text('Rate'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.marigoldDark,
+                      side: const BorderSide(
+                          color: AppColors.marigoldDark),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // ── Withdraw (still actionable) ───────────────
           if (canWithdraw) ...[
             const SizedBox(height: 10),
             _isWithdrawing
                 ? const Center(
                     child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2)))
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2),
+                    ),
+                  )
                 : Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       onPressed: _withdraw,
-                      icon: const Icon(Icons.cancel_outlined,
-                          size: 16, color: AppColors.coral),
-                      label: const Text('Withdraw',
-                          style: TextStyle(
-                              color: AppColors.coral, fontSize: 12)),
+                      icon: const Icon(
+                          Icons.cancel_outlined,
+                          size: 16,
+                          color: AppColors.coral),
+                      label: const Text(
+                        'Withdraw',
+                        style: TextStyle(
+                            color: AppColors.coral,
+                            fontSize: 12),
+                      ),
                       style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                      ),
                     ),
                   ),
           ],
