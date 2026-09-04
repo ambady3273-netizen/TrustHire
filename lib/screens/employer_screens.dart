@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -8,9 +8,9 @@ import '../providers/job_provider.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ESCROW SCREEN
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class EscrowScreen extends ConsumerWidget {
   const EscrowScreen({super.key});
@@ -34,7 +34,7 @@ class EscrowScreen extends ConsumerWidget {
                 const Text('Amount to escrow',
                     style: TextStyle(fontSize: 11, color: AppColors.mute)),
                 Text(
-                  '₹${fmt.format(salary.toInt())}',
+                  'â‚¹${fmt.format(salary.toInt())}',
                   style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
@@ -62,7 +62,7 @@ class EscrowScreen extends ConsumerWidget {
             ),
           ),
           const LabelSmall('Pay via'),
-          const FieldBox('Razorpay · UPI / Card / Netbanking',
+          const FieldBox('Razorpay Â· UPI / Card / Netbanking',
               icon: Icons.credit_card),
           const SizedBox(height: 60),
         ],
@@ -70,7 +70,7 @@ class EscrowScreen extends ConsumerWidget {
       bottomSheet: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
         child: PrimaryButton(
-          label: 'Deposit ₹${fmt.format(salary.toInt())} into escrow',
+          label: 'Deposit â‚¹${fmt.format(salary.toInt())} into escrow',
           onTap: () => Navigator.pushNamed(context, '/confirmRelease'),
         ),
       ),
@@ -78,9 +78,9 @@ class EscrowScreen extends ConsumerWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIRM RELEASE SCREEN
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class ConfirmReleaseScreen extends ConsumerWidget {
   const ConfirmReleaseScreen({super.key});
@@ -107,7 +107,7 @@ class ConfirmReleaseScreen extends ConsumerWidget {
         children: [
           EscrowLockBar(
             amountLabel:
-                '₹${fmt.format((job?.salary ?? 0).toInt())}',
+                'â‚¹${fmt.format((job?.salary ?? 0).toInt())}',
           ),
           const SizedBox(height: 6),
           if (hiredApp != null)
@@ -141,9 +141,9 @@ class ConfirmReleaseScreen extends ConsumerWidget {
               children: const [
                 LabelSmall('Before you release'),
                 Text(
-                  '☑ Work was completed as described\n'
-                  '☑ Hours match what was agreed\n'
-                  '☑ No safety or conduct issues',
+                  'â˜‘ Work was completed as described\n'
+                  'â˜‘ Hours match what was agreed\n'
+                  'â˜‘ No safety or conduct issues',
                   style: TextStyle(fontSize: 11.5, height: 1.7),
                 ),
               ],

@@ -157,9 +157,8 @@ class FirestoreService {
   // APPLICATION FUNCTIONS
   // ============================================================
 
-  /// Apply for a job.
-  /// Throws if the seeker has already applied.
-  /// Uses server timestamps for both appliedAt and updatedAt.
+  /// Apply for a job. Throws if the seeker has already applied.
+  /// Uses server timestamps for appliedAt and updatedAt.
   Future<String> applyForJob(ApplicationModel application) async {
     final existing = await applications
         .where('jobId', isEqualTo: application.jobId)
@@ -189,7 +188,7 @@ class FirestoreService {
             s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
   }
 
-  /// Stream all applications submitted by a seeker (seeker view).
+  /// Stream all applications submitted by a seeker.
   Stream<List<ApplicationModel>> getMyApplications(String seekerId) {
     return applications
         .where('seekerId', isEqualTo: seekerId)
@@ -239,6 +238,7 @@ class FirestoreService {
         .where('seekerId', isEqualTo: seekerId)
         .limit(1)
         .get();
+
     if (snap.docs.isEmpty) return null;
     return ApplicationModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
   }

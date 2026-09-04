@@ -1,4 +1,4 @@
-/// Centralised route name constants — mirrors the route map in main.dart.
+﻿/// Centralised route name constants â€” mirrors the route map in main.dart.
 /// Use these everywhere instead of raw string literals so a rename
 /// produces a compile error rather than a silent routing failure.
 class AppRoutes {

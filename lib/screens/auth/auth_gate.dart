@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,14 +7,14 @@ import '../../providers/auth_provider.dart';
 import '../../theme.dart';
 import 'login_screen.dart';
 
-/// AuthGate — app entry point after Firebase initialises.
+/// AuthGate â€” app entry point after Firebase initialises.
 ///
 /// Flow:
-///   loading              → spinner
-///   not signed in        → LoginScreen
-///   signed in + doc      → route by role to the correct dashboard
-///   signed in, no doc    → auto-create Firestore doc → re-route
-///   Firestore error      → retry / logout screen
+///   loading              â†’ spinner
+///   not signed in        â†’ LoginScreen
+///   signed in + doc      â†’ route by role to the correct dashboard
+///   signed in, no doc    â†’ auto-create Firestore doc â†’ re-route
+///   Firestore error      â†’ retry / logout screen
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -32,11 +32,10 @@ class AuthGate extends ConsumerWidget {
       ),
 
       data: (userModel) {
-        // ── Not signed in ─────────────────────────────────────
+        // â”€â”€ Not signed in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (userModel == null) {
           final firebaseUser = ref.read(authServiceProvider).currentUser;
 
-          // Truly not logged in → show login
           if (firebaseUser == null) {
             return const LoginScreen();
           }
@@ -52,16 +51,16 @@ class AuthGate extends ConsumerWidget {
           );
         }
 
-        // ── Signed in — route by role ─────────────────────────
+        // â”€â”€ Signed in â€” route by role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         return _RoleRouter(role: userModel.role);
       },
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Role router — reads role and pushes the correct dashboard
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Role router â€” reads role and pushes the correct dashboard
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _RoleRouter extends StatefulWidget {
   final String role;
@@ -103,9 +102,9 @@ class _RoleRouterState extends State<_RoleRouter> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Auto-create profile when Firestore doc is missing
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AutoCreateProfileScreen extends ConsumerStatefulWidget {
   final String uid;
@@ -154,8 +153,6 @@ class _AutoCreateProfileScreenState
         lastLogin: now,
       );
       await firestore.createUser(user);
-
-      // Invalidate userProvider so AuthGate re-evaluates with the new doc.
       if (mounted) ref.invalidate(userProvider);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -193,8 +190,6 @@ class _AutoCreateProfileScreenState
                 style: const TextStyle(color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 28),
-
-              // Role selector
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(
@@ -213,7 +208,6 @@ class _AutoCreateProfileScreenState
                     ? null
                     : (v) => setState(() => _selectedRole = v.first),
               ),
-
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -222,9 +216,7 @@ class _AutoCreateProfileScreenState
                   textAlign: TextAlign.center,
                 ),
               ],
-
               const SizedBox(height: 28),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -282,9 +274,9 @@ class _AutoCreateProfileScreenState
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helper screens
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
@@ -410,7 +402,8 @@ class _UnknownRoleScreen extends StatelessWidget {
                 'Your account has an unrecognised role: "$role". '
                 'Please contact support or log out and register again.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.mute, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 32),
               SizedBox(

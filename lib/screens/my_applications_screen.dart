@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -35,8 +35,7 @@ class MyApplicationsScreen extends ConsumerWidget {
                     width: 68,
                     height: 68,
                     decoration: const BoxDecoration(
-                        color: AppColors.tealLight,
-                        shape: BoxShape.circle),
+                        color: AppColors.tealLight, shape: BoxShape.circle),
                     child: const Icon(Icons.receipt_long_outlined,
                         size: 30, color: AppColors.teal),
                   ),
@@ -119,7 +118,6 @@ class _ApplicationTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status icon circle
           Container(
             width: 42,
             height: 42,
@@ -130,8 +128,6 @@ class _ApplicationTile extends StatelessWidget {
             child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(width: 12),
-
-          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

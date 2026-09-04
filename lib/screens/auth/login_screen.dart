@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
@@ -30,31 +30,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
-    final notifier = ref.read(authProvider.notifier);
+    final result = await ref.read(authProvider.notifier).login(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
 
-    final result = await notifier.login(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
-
-    setState(() {
-      isLoading = false;
-    });
+    setState(() => isLoading = false);
 
     if (result != null) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(result), backgroundColor: Colors.red),
       );
-
       return;
     }
 
@@ -75,7 +64,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             key: _formKey,
             child: Column(
               children: [
-
                 const SizedBox(height: 40),
 
                 Image.asset(
@@ -87,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 20),
 
                 const Text(
-                  "Welcome Back",
+                  'Welcome Back',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -98,10 +86,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  "Login to continue using TrustHire",
-                  style: TextStyle(
-                    color: AppColors.mute,
-                  ),
+                  'Login to continue using TrustHire',
+                  style: TextStyle(color: AppColors.mute),
                 ),
 
                 const SizedBox(height: 35),
@@ -110,25 +96,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: "Email",
+                    labelText: 'Email',
                     prefixIcon: const Icon(Icons.email),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Enter email";
-                    }
-
+                    if (value == null || value.isEmpty) return 'Enter email';
                     final emailRegex = RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    );
-
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                     if (!emailRegex.hasMatch(value.trim())) {
-                      return "Invalid email";
+                      return 'Invalid email';
                     }
-
                     return null;
                   },
                 ),
@@ -139,33 +119,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: passwordController,
                   obscureText: obscurePassword,
                   decoration: InputDecoration(
-                    labelText: "Password",
+                    labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      },
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
+                      onPressed: () =>
+                          setState(() => obscurePassword = !obscurePassword),
+                      icon: Icon(obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Enter password";
-                    }
-
-                    if (value.length < 6) {
-                      return "Minimum 6 characters";
-                    }
-
+                    if (value == null || value.isEmpty) return 'Enter password';
+                    if (value.length < 6) return 'Minimum 6 characters';
                     return null;
                   },
                 ),
@@ -175,13 +144,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/forgotPassword",
-                      );
-                    },
-                    child: const Text("Forgot Password?"),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/forgotPassword'),
+                    child: const Text('Forgot Password?'),
                   ),
                 ),
 
@@ -202,11 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: isLoading
                         ? const CircularProgressIndicator()
                         : const Text(
-                            "LOGIN",
+                            'LOGIN',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                                fontWeight: FontWeight.bold, fontSize: 18),
                           ),
                   ),
                 ),
@@ -216,17 +179,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     const Text("Don't have an account?"),
-
                     TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          "/register",
-                        );
-                      },
-                      child: const Text("Register"),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/register'),
+                      child: const Text('Register'),
                     ),
                   ],
                 ),
