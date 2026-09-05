@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/job_model.dart';
 import '../models/application_model.dart';
+import '../models/job_model.dart';
+import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 
 // ============================================================
@@ -84,4 +85,31 @@ final selectedJobProvider = StateProvider<JobModel?>((ref) => null);
 /// Quick access to the raw Firebase User (for uid, email etc.).
 final currentFirebaseUserProvider = Provider<User?>((ref) {
   return ref.watch(authServiceProvider).currentUser;
+});
+
+// ============================================================
+// PENDING JOBS — for admin review
+// ============================================================
+
+final pendingJobsProvider = StreamProvider<List<JobModel>>((ref) {
+  return ref.watch(firestoreServiceProvider).getPendingJobs();
+});
+
+// ============================================================
+// JOB-SPECIFIC APPLICATIONS — for a single selected job
+// ============================================================
+
+final jobApplicationsForSelectedProvider =
+    StreamProvider<List<ApplicationModel>>((ref) {
+  final job = ref.watch(selectedJobProvider);
+  if (job == null) return const Stream.empty();
+  return ref.watch(firestoreServiceProvider).getApplicationsForJob(job.id);
+});
+
+// ============================================================
+// ADMIN — unverified users
+// ============================================================
+
+final unverifiedUsersProvider = StreamProvider<List<UserModel>>((ref) {
+  return ref.watch(firestoreServiceProvider).getUnverifiedUsers();
 });

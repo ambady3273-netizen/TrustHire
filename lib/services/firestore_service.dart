@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_model.dart';
-// KycStatus constants are defined in user_model.dart
 import '../models/job_model.dart';
 import '../models/application_model.dart';
 import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import '../models/rating_model.dart';
+import '../models/notification_model.dart';
+import '../models/review_model.dart';
 
 class FirestoreService {
   FirestoreService();
@@ -348,6 +349,25 @@ class FirestoreService {
     data['updatedAt'] = FieldValue.serverTimestamp();
 
     final doc = await applications.add(data);
+
+    // Notify employer — new applicant
+    await _notify(
+      userId: application.employerId,
+      title: 'New Applicant',
+      body: '${application.seekerName.isNotEmpty ? application.seekerName : "Someone"} applied for "${application.jobTitle}".',
+      type: NotificationType.newApplicant,
+      actionRoute: '/jobApplicants',
+      actionId: application.jobId,
+    );
+    // Notify seeker — application sent
+    await _notify(
+      userId: application.seekerId,
+      title: 'Application Sent',
+      body: 'Your application for "${application.jobTitle}" was submitted successfully.',
+      type: NotificationType.applicationSent,
+      actionRoute: '/myApplications',
+    );
+
     return doc.id;
   }
 
@@ -395,6 +415,31 @@ class FirestoreService {
       'status': status,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    // Notify seeker of accept/reject
+    final appDoc = await applications.doc(applicationId).get();
+    if (!appDoc.exists || appDoc.data() == null) return;
+    final d = appDoc.data()!;
+    final seekerId = d['seekerId'] as String? ?? '';
+    final jobTitle = d['jobTitle'] as String? ?? 'your job';
+    if (status == ApplicationStatus.accepted) {
+      await _notify(
+        userId: seekerId,
+        title: 'Application Accepted 🎉',
+        body: 'Your application for "$jobTitle" has been accepted!',
+        type: NotificationType.shortlisted,
+        actionRoute: '/myApplications',
+        actionId: applicationId,
+      );
+    } else if (status == ApplicationStatus.rejected) {
+      await _notify(
+        userId: seekerId,
+        title: 'Application Update',
+        body: 'Your application for "$jobTitle" was not selected this time.',
+        type: NotificationType.general,
+        actionRoute: '/myApplications',
+        actionId: applicationId,
+      );
+    }
   }
 
   /// Seeker withdraws their own application.
@@ -683,6 +728,151 @@ class FirestoreService {
         .snapshots()
         .map((snap) =>
             snap.docs.map((d) => UserModel.fromMap(d.data())).toList());
+  }
+
+  /// Stream unverified users (admin use).
+  Stream<List<UserModel>> getUnverifiedUsers() {
+    return users
+        .where('verified', isEqualTo: false)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => UserModel.fromMap(d.data())).toList());
+  }
+
+  // ============================================================
+  // FCM TOKEN
+  // ============================================================
+
+  /// Save or update the device FCM token for push notifications.
+  Future<void> saveFcmToken(String uid, String token) async {
+    await users.doc(uid).set(
+      {'fcmToken': token},
+      SetOptions(merge: true),
+    );
+  }
+
+  // ============================================================
+  // NOTIFICATIONS COLLECTION
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get notifications =>
+      _firestore.collection('notifications');
+
+  Stream<List<NotificationModel>> getNotifications(String uid) {
+    return notifications
+        .where('userId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => NotificationModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
+  Stream<int> getUnreadCount(String uid) {
+    return notifications
+        .where('userId', isEqualTo: uid)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((s) => s.docs.length);
+  }
+
+  Future<void> createNotification(NotificationModel n) async {
+    await notifications.add(n.toMap());
+  }
+
+  Future<void> markNotificationRead(String notifId) async {
+    await notifications.doc(notifId).update({'isRead': true});
+  }
+
+  Future<void> markAllNotificationsRead(String uid) async {
+    final unread = await notifications
+        .where('userId', isEqualTo: uid)
+        .where('isRead', isEqualTo: false)
+        .get();
+    if (unread.docs.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final doc in unread.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
+  }
+
+  Future<void> deleteNotification(String notifId) async {
+    await notifications.doc(notifId).delete();
+  }
+
+  Future<void> clearAllNotifications(String uid) async {
+    final all = await notifications.where('userId', isEqualTo: uid).get();
+    if (all.docs.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final doc in all.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  // ============================================================
+  // REVIEWS COLLECTION (legacy ReviewModel)
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get reviews =>
+      _firestore.collection('reviews');
+
+  Future<void> submitReview(ReviewModel review) async {
+    await reviews.add(review.toMap());
+    final snap = await reviews
+        .where('reviewedUserId', isEqualTo: review.reviewedUserId)
+        .get();
+    if (snap.docs.isEmpty) return;
+    double total = 0;
+    for (final doc in snap.docs) {
+      total += (doc.data()['rating'] ?? 0).toDouble();
+    }
+    final avg = total / snap.docs.length;
+    final jobCount = snap.docs.length;
+    final ratingPts = (avg / 5.0) * 60;
+    final jobPts = jobCount > 20 ? 20.0 : jobCount.toDouble();
+    final score = (20 + ratingPts + jobPts).clamp(0.0, 100.0);
+    await updateTrustScore(review.reviewedUserId, score);
+  }
+
+  Stream<List<ReviewModel>> getUserReviews(String userId) {
+    return reviews
+        .where('reviewedUserId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => ReviewModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // PRIVATE HELPER — fire-and-forget in-app notification
+  // ─────────────────────────────────────────────────────────
+
+  Future<void> _notify({
+    required String userId,
+    required String title,
+    required String body,
+    required NotificationType type,
+    String? actionRoute,
+    String? actionId,
+  }) async {
+    if (userId.isEmpty) return;
+    try {
+      await notifications.add({
+        'userId': userId,
+        'title': title,
+        'body': body,
+        'type': type.value,
+        'isRead': false,
+        'actionRoute': actionRoute,
+        'actionId': actionId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Never let a notification failure break the main operation.
+    }
   }
 }
 
