@@ -1,4 +1,6 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +12,7 @@ import '../providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../providers/notifications_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
@@ -25,6 +28,10 @@ class JobFeedScreen extends ConsumerWidget {
     final unreadCount =
         ref.watch(unreadNotificationCountProvider).whenOrNull(data: (n) => n) ?? 0;
     final jobsAsync = ref.watch(approvedJobsProvider);
+    final trustScore = ref.watch(userProvider).maybeWhen(
+          data: (u) => u?.trustScore.toInt() ?? 0,
+          orElse: () => 0,
+        );
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +80,7 @@ class JobFeedScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(width: 4),
-          const TrustRing(percent: 62, size: 30),
+          TrustRing(percent: trustScore.clamp(0, 100), size: 30),
           const SizedBox(width: 16),
         ],
       ),
@@ -573,6 +580,14 @@ class _RateScreenState extends ConsumerState<RateScreen> {
       );
       try {
         await FirestoreService.instance.submitReview(review);
+        // Notify the employer that they received a new review.
+        final seekerName = ref.read(userProvider).valueOrNull?.fullName ?? 'A worker';
+        unawaited(NotificationService.instance.reviewReceived(
+          userId: job.employerId,
+          reviewerName: seekerName,
+          rating: _rating,
+          jobTitle: job.title,
+        ));
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

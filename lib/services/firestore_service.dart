@@ -59,6 +59,11 @@ class FirestoreService {
     await users.doc(uid).update({'profileImage': image});
   }
 
+  /// Save the KYC selfie download URL to the user document.
+  Future<void> updateKycSelfie(String uid, String selfieUrl) async {
+    await users.doc(uid).update({'kycSelfieUrl': selfieUrl});
+  }
+
   Future<void> updateTrustScore(String uid, double score) async {
     await users.doc(uid).update({'trustScore': score});
   }

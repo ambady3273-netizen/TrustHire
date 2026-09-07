@@ -11,9 +11,9 @@ import '../services/firestore_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 // SPLASH
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -59,7 +59,8 @@ class SplashScreen extends StatelessWidget {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: const Text('I already have an account', style: TextStyle(color: Colors.white70)),
+                child: const Text('I already have an account',
+                    style: TextStyle(color: Colors.white70)),
               ),
             ],
           ),
@@ -69,12 +70,20 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ROLE SELECT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// ROLE SELECT — interactive, stores selection for KYC flow
+// ═══════════════════════════════════════════════════════════════
 
-class RoleSelectScreen extends StatelessWidget {
+class RoleSelectScreen extends StatefulWidget {
   const RoleSelectScreen({super.key});
+
+  @override
+  State<RoleSelectScreen> createState() => _RoleSelectScreenState();
+}
+
+class _RoleSelectScreenState extends State<RoleSelectScreen> {
+  // Default to job_seeker so the first card starts selected.
+  String _selectedRole = 'job_seeker';
 
   @override
   Widget build(BuildContext context) {
@@ -94,30 +103,66 @@ class RoleSelectScreen extends StatelessWidget {
             const Text('You can add the other role later from Settings.',
                 style: TextStyle(fontSize: 12, color: AppColors.mute)),
             const SizedBox(height: 22),
-            AppCard(
-              borderColor: AppColors.ink,
-              borderWidth: 2,
-              child: const _RoleRow(
-                icon: Icons.person_outline,
-                bg: AppColors.tealLight,
-                fg: AppColors.teal,
-                title: "I'm looking for work",
-                subtitle: 'Find verified part-time jobs nearby',
+
+            // ── Job Seeker card ─────────────────────────────────
+            GestureDetector(
+              onTap: () => setState(() => _selectedRole = 'job_seeker'),
+              child: AppCard(
+                borderColor: _selectedRole == 'job_seeker'
+                    ? AppColors.ink
+                    : AppColors.border,
+                borderWidth: _selectedRole == 'job_seeker' ? 2 : 1,
+                child: Row(
+                  children: [
+                    const _RoleRow(
+                      icon: Icons.person_outline,
+                      bg: AppColors.tealLight,
+                      fg: AppColors.teal,
+                      title: "I'm looking for work",
+                      subtitle: 'Find verified part-time jobs nearby',
+                    ),
+                    if (_selectedRole == 'job_seeker')
+                      const Icon(Icons.check_circle_rounded,
+                          color: AppColors.teal, size: 20),
+                  ],
+                ),
               ),
             ),
-            AppCard(
-              child: const _RoleRow(
-                icon: Icons.storefront_outlined,
-                bg: AppColors.warnBg,
-                fg: AppColors.marigoldDark,
-                title: "I'm hiring",
-                subtitle: 'Post jobs after business verification',
+
+            // ── Employer card ───────────────────────────────────
+            GestureDetector(
+              onTap: () => setState(() => _selectedRole = 'employer'),
+              child: AppCard(
+                borderColor: _selectedRole == 'employer'
+                    ? AppColors.ink
+                    : AppColors.border,
+                borderWidth: _selectedRole == 'employer' ? 2 : 1,
+                child: Row(
+                  children: [
+                    const _RoleRow(
+                      icon: Icons.storefront_outlined,
+                      bg: AppColors.warnBg,
+                      fg: AppColors.marigoldDark,
+                      title: "I'm hiring",
+                      subtitle: 'Post jobs after business verification',
+                    ),
+                    if (_selectedRole == 'employer')
+                      const Icon(Icons.check_circle_rounded,
+                          color: AppColors.ink, size: 20),
+                  ],
+                ),
               ),
             ),
+
             const Spacer(),
             PrimaryButton(
               label: 'Continue',
-              onTap: () => Navigator.pushNamed(context, AppRoutes.kyc),
+              // Pass selected role to KYC via constructor argument.
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.kyc,
+                arguments: _selectedRole,
+              ),
             ),
           ],
         ),
@@ -142,38 +187,41 @@ class _RoleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-              color: bg, borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: fg, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style: const TextStyle(
-                      fontSize: 11.5, color: AppColors.mute)),
-            ],
+    return Expanded(
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+                color: bg, borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: fg, size: 20),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: const TextStyle(
+                        fontSize: 11.5, color: AppColors.mute)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// KYC SCREEN â€” real image_picker + Firebase Storage upload
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// KYC SCREEN — image_picker + Firebase Storage upload
+// Accepts optional route argument: role string ('job_seeker'|'employer')
+// ═══════════════════════════════════════════════════════════════
 
 class KycScreen extends ConsumerStatefulWidget {
   const KycScreen({super.key});
@@ -202,7 +250,7 @@ class _KycScreenState extends ConsumerState<KycScreen> {
     if (picked != null) setState(() => _selfieFile = File(picked.path));
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(String? selectedRole) async {
     if (_idFile == null || _selfieFile == null) {
       setState(() => _error = 'Please upload both your ID and selfie.');
       return;
@@ -219,14 +267,23 @@ class _KycScreenState extends ConsumerState<KycScreen> {
 
       final storage = FirebaseStorage.instance;
 
+      // Upload government ID
       final idRef = storage.ref('kyc/$uid/government_id.jpg');
       await idRef.putFile(_idFile!);
       final idUrl = await idRef.getDownloadURL();
 
+      // Upload selfie and save its URL too
       final selfieRef = storage.ref('kyc/$uid/selfie.jpg');
       await selfieRef.putFile(_selfieFile!);
+      final selfieUrl = await selfieRef.getDownloadURL();
 
+      // Persist both URLs and update role if passed from RoleSelectScreen
       await FirestoreService.instance.updateProfileImage(uid, idUrl);
+      await FirestoreService.instance.updateKycSelfie(uid, selfieUrl);
+
+      if (selectedRole != null && selectedRole.isNotEmpty) {
+        await FirestoreService.instance.updateRole(uid, selectedRole);
+      }
 
       if (mounted) {
         Navigator.pushNamed(context, AppRoutes.trustIntro);
@@ -240,6 +297,10 @@ class _KycScreenState extends ConsumerState<KycScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Read the role argument passed from RoleSelectScreen (may be null).
+    final selectedRole =
+        ModalRoute.of(context)?.settings.arguments as String?;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Verify your identity')),
       body: Padding(
@@ -256,8 +317,9 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             const LabelSmall('Government ID'),
             _UploadBox(
               icon: Icons.description_outlined,
-              title: _idFile == null ? 'Upload Aadhaar / PAN' : 'âœ“ ID selected',
-              subtitle: 'JPG or PNG Â· under 5 MB',
+              title:
+                  _idFile == null ? 'Upload Aadhaar / PAN' : '✓ ID selected',
+              subtitle: 'JPG or PNG · under 5 MB',
               picked: _idFile != null,
               onTap: _uploading ? null : _pickId,
             ),
@@ -265,16 +327,18 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             const LabelSmall('Selfie match'),
             _UploadBox(
               icon: Icons.face_retouching_natural,
-              title:
-                  _selfieFile == null ? 'Take a live selfie' : 'âœ“ Selfie captured',
-              subtitle: 'Camera Â· matched against your ID',
+              title: _selfieFile == null
+                  ? 'Take a live selfie'
+                  : '✓ Selfie captured',
+              subtitle: 'Camera · matched against your ID',
               picked: _selfieFile != null,
               onTap: _uploading ? null : _pickSelfie,
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
               Text(_error!,
-                  style: const TextStyle(color: AppColors.coral, fontSize: 12)),
+                  style:
+                      const TextStyle(color: AppColors.coral, fontSize: 12)),
             ],
             const Spacer(),
             const Center(
@@ -283,8 +347,8 @@ class _KycScreenState extends ConsumerState<KycScreen> {
             ),
             const SizedBox(height: 10),
             PrimaryButton(
-              label: _uploading ? 'Uploadingâ€¦' : 'Submit for verification',
-              onTap: _uploading ? null : _submit,
+              label: _uploading ? 'Uploading…' : 'Submit for verification',
+              onTap: _uploading ? null : () => _submit(selectedRole),
             ),
           ],
         ),
@@ -314,7 +378,8 @@ class _UploadBox extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 14),
+        padding:
+            const EdgeInsets.symmetric(vertical: 22, horizontal: 14),
         decoration: BoxDecoration(
           color: picked ? AppColors.tealLight : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -326,7 +391,8 @@ class _UploadBox extends StatelessWidget {
         child: Column(
           children: [
             Icon(icon,
-                color: picked ? AppColors.teal : AppColors.mute, size: 26),
+                color: picked ? AppColors.teal : AppColors.mute,
+                size: 26),
             const SizedBox(height: 6),
             Text(title,
                 style: TextStyle(
@@ -335,7 +401,8 @@ class _UploadBox extends StatelessWidget {
                     color: picked ? AppColors.teal : AppColors.ink)),
             const SizedBox(height: 2),
             Text(subtitle,
-                style: const TextStyle(fontSize: 10, color: AppColors.mute)),
+                style:
+                    const TextStyle(fontSize: 10, color: AppColors.mute)),
           ],
         ),
       ),
@@ -343,24 +410,29 @@ class _UploadBox extends StatelessWidget {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// TRUST INTRO
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════════════
+// TRUST INTRO — shows real user trustScore
+// ═══════════════════════════════════════════════════════════════
 
-class TrustIntroScreen extends StatelessWidget {
+class TrustIntroScreen extends ConsumerWidget {
   const TrustIntroScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trustScore = ref.watch(userProvider).maybeWhen(
+          data: (u) => u?.trustScore.toInt() ?? 20,
+          orElse: () => 20,
+        );
+
     return Scaffold(
       appBar: AppBar(title: const Text("You're verified")),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const AppBadge('âœ“ Identity confirmed', type: BadgeType.verified),
+            const AppBadge('✓ Identity confirmed', type: BadgeType.verified),
             const SizedBox(height: 18),
-            const TrustRing(percent: 35, size: 92),
+            TrustRing(percent: trustScore.clamp(0, 100), size: 92),
             const SizedBox(height: 16),
             const Text('This is your Trust Ring',
                 style: TextStyle(
@@ -372,7 +444,8 @@ class TrustIntroScreen extends StatelessWidget {
               "It grows as you complete jobs, collect reviews, "
               "and stay complaint-free. Everyone you work with can see it.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.mute, height: 1.5),
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.mute, height: 1.5),
             ),
             const SizedBox(height: 18),
             AppCard(
@@ -385,9 +458,11 @@ class TrustIntroScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink)),
                   SizedBox(height: 8),
-                  _GrowRow(label: 'âœ“ ID verified', points: '+20'),
-                  _GrowRow(label: 'Complete your first job', points: '+15'),
-                  _GrowRow(label: 'Get 5 reviews above 4â˜…', points: '+15'),
+                  _GrowRow(label: '✓ ID verified', points: '+20'),
+                  _GrowRow(
+                      label: 'Complete your first job', points: '+15'),
+                  _GrowRow(
+                      label: 'Get 5 reviews above 4★', points: '+15'),
                 ],
               ),
             ),
@@ -419,7 +494,8 @@ class _GrowRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
+              style: const TextStyle(
+                  fontSize: 11.5, color: AppColors.mute)),
           Text(points,
               style: const TextStyle(
                   fontSize: 11.5,

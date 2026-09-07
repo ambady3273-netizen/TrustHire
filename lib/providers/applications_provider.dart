@@ -6,15 +6,12 @@ import '../services/firestore_service.dart';
 import 'auth_provider.dart';
 import 'job_provider.dart';
 
-// â”€â”€ seeker: all my applications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-final myApplicationsProvider = StreamProvider<List<ApplicationModel>>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  final uid = authService.currentUser?.uid ?? '';
-  if (uid.isEmpty) return const Stream.empty();
-  return FirestoreService.instance.getMyApplications(uid);
-});
+// ── seeker: all my applications ───────────────────────────────
+// Single source of truth is job_provider.dart.
+// This re-export keeps old import paths working without double-subscribing.
+export 'job_provider.dart' show myApplicationsProvider;
 
-// â”€â”€ employer: applications for the selected job â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── employer: applications for the selected job (by StateProvider) ────────
 final jobApplicationsForSelectedProvider =
     StreamProvider<List<ApplicationModel>>((ref) {
   final job = ref.watch(selectedJobProvider);
@@ -22,7 +19,7 @@ final jobApplicationsForSelectedProvider =
   return FirestoreService.instance.getApplicationsForJob(job.id);
 });
 
-// â”€â”€ admin: unverified users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── admin: unverified users ───────────────────────────────────
 final unverifiedUsersProvider = StreamProvider<List<UserModel>>((ref) {
   return FirestoreService.instance.getUnverifiedUsers();
 });

@@ -320,7 +320,15 @@ class _VerificationCard extends StatelessWidget {
                 child: OutlineButton(
                   label: 'Reject',
                   onTap: () async {
-                    // Keep unverified — just notify admin action taken
+                    // Write rejection to Firestore and notify user
+                    await FirestoreService.instance
+                        .verifyUser(user.uid, false);
+                    unawaited(NotificationService.instance.kycRejected(
+                      userId: user.uid,
+                      reason:
+                          'Your identity documents could not be verified. '
+                          'Please resubmit with clear, valid documents.',
+                    ));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
