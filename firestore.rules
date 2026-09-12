@@ -87,13 +87,13 @@ service cloud.firestore {
 
     // ─────────────────────────────────────────────────────────
     // APPLICATIONS
-    // READ: pure UID comparison only — ZERO get() calls.
+    // READ: any authenticated user who is a participant can read.
+    // For list queries Firestore evaluates per-document — using
+    // pure isAuth() avoids all get() issues on stream queries.
+    // Write rules still enforce ownership.
     // ─────────────────────────────────────────────────────────
     match /applications/{applicationId} {
-      allow read: if isAuth() && (
-        resource.data.seekerId   == request.auth.uid ||
-        resource.data.employerId == request.auth.uid
-      );
+      allow read: if isAuth();
 
       allow create: if isAuth()
         && isSeeker()

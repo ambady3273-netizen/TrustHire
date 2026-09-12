@@ -57,6 +57,11 @@ class AdminDashboard extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'My Profile',
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => Navigator.pushNamed(context, '/editProfile'),
+          ),
+          IconButton(
             tooltip: 'Logout',
             icon: const Icon(Icons.logout),
             onPressed: () async {
