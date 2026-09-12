@@ -186,14 +186,33 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
   Future<void> _openChat(
       BuildContext ctx, WidgetRef ref, ApplicationModel app) async {
     final fs = ref.read(firestoreServiceProvider);
-    final chat = await fs.getChatForApplication(app.id);
+
+    // Try to get the existing chat.
+    var chat = await fs.getChatForApplication(app.id);
+
+    // If chat doesn't exist yet (accept happened but chat creation failed),
+    // create it now so the employer can always open chat for accepted apps.
+    if (chat == null) {
+      final userModel = ref.read(userProvider).valueOrNull;
+      try {
+        chat = await fs.createChatForApplication(
+          application: app,
+          employerName: userModel?.fullName ?? 'Employer',
+        );
+      } catch (_) {}
+    }
+
     if (!ctx.mounted) return;
+
     if (chat != null) {
       ref.read(selectedChatProvider.notifier).state = chat;
       Navigator.pushNamed(ctx, '/chatScreen');
     } else {
       ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(content: Text('Chat not found. Try again.')),
+        const SnackBar(
+          content: Text('Could not open chat. Please try again.'),
+          backgroundColor: Color(0xFFE15B4F),
+        ),
       );
     }
   }
