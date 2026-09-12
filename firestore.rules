@@ -3,24 +3,20 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ──────────────────────────────────────────────────────────
-    // HELPER FUNCTIONS
+    // HELPERS
+    // callerRole() uses get() — NEVER call it inside list/read
+    // rules on large collections (causes permission-denied on
+    // streaming queries due to cross-document read limits).
+    // Only call it on single-document writes.
     // ──────────────────────────────────────────────────────────
 
     function isAuth() {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return isAuth() && request.auth.uid == uid;
-    }
-
-    // Safe role lookup — only called for operations that truly need
-    // role verification (create/update). Never called inside READ
-    // rules on collections to avoid cross-document read limits on
-    // streaming queries.
     function callerRole() {
-      let userDoc = /databases/$(database)/documents/users/$(request.auth.uid);
-      return isAuth() && exists(userDoc) ? get(userDoc).data.role : '';
+      let doc = /databases/$(database)/documents/users/$(request.auth.uid);
+      return isAuth() && exists(doc) ? get(doc).data.role : '';
     }
 
     function isSeeker()   { return isAuth() && callerRole() == 'job_seeker'; }
@@ -35,13 +31,14 @@ service cloud.firestore {
     // USERS
     // ──────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read:   if isOwner(userId) || isAdmin();
+      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
       allow create: if isAuth()
         && request.auth.uid == userId
         && isAllowedSelfRole(request.resource.data.role)
         && request.resource.data.verified == false;
       allow update: if (
-          isOwner(userId)
+          request.auth.uid == userId
+          && isAuth()
           && isAllowedSelfRole(request.resource.data.role)
           && request.resource.data.verified == resource.data.verified
         ) || isAdmin();
@@ -50,14 +47,15 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────────────────
     // JOBS
+    // READ rule: any authenticated user can read any job.
+    // Security is enforced on write only.
+    // This allows:
+    //   - Seekers to browse approved jobs
+    //   - Employers to see their own jobs (any status)
+    //   - Admins to see pending_review jobs for fraud review
     // ──────────────────────────────────────────────────────────
     match /jobs/{jobId} {
-      // READ: no callerRole() — pure UID comparison avoids get() on
-      // streaming queries.
-      allow read: if isAuth() && (
-        resource.data.status == 'approved' ||
-        resource.data.employerId == request.auth.uid
-      );
+      allow read:   if isAuth();
       allow create: if isEmployer()
         && request.resource.data.employerId == request.auth.uid;
       allow update: if (
@@ -70,39 +68,32 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────────────────
     // APPLICATIONS
+    // READ: pure UID match — no callerRole() to avoid get() limits
+    // on streaming queries.
     // ──────────────────────────────────────────────────────────
     match /applications/{applicationId} {
-      // ── READ ─────────────────────────────────────────────────
-      // IMPORTANT: No callerRole() / isAdmin() here — those trigger
-      // a get() call which breaks streaming queries (permission-denied).
-      // Pure UID comparisons only.
       allow read: if isAuth() && (
         resource.data.seekerId   == request.auth.uid ||
         resource.data.employerId == request.auth.uid
       );
 
-      // ── CREATE ───────────────────────────────────────────────
       allow create: if isSeeker()
         && request.resource.data.seekerId == request.auth.uid
         && request.resource.data.status   == 'applied';
 
-      // ── UPDATE ───────────────────────────────────────────────
       allow update: if isAuth() && (
         (
-          // Seeker withdraws
           resource.data.seekerId == request.auth.uid
           && request.resource.data.status     == 'withdrawn'
           && request.resource.data.seekerId   == resource.data.seekerId
           && request.resource.data.jobId      == resource.data.jobId
           && request.resource.data.employerId == resource.data.employerId
         ) || (
-          // Employer updates status
           resource.data.employerId == request.auth.uid
           && request.resource.data.seekerId   == resource.data.seekerId
           && request.resource.data.jobId      == resource.data.jobId
           && request.resource.data.employerId == resource.data.employerId
-        ) ||
-        isAdmin()
+        ) || isAdmin()
       );
 
       allow delete: if isAdmin();
@@ -110,9 +101,9 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────────────────
     // CHATS
+    // READ: pure UID match — no callerRole().
     // ──────────────────────────────────────────────────────────
     match /chats/{chatId} {
-      // READ: pure UID comparison — no callerRole().
       allow read: if isAuth() && (
         resource.data.seekerId   == request.auth.uid ||
         resource.data.employerId == request.auth.uid
@@ -130,20 +121,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        // READ: look up parent chat — only 1 get() per message read.
         allow read: if isAuth() && (
-          get(/databases/$(database)/documents/chats/$(chatId)).data.seekerId
-            == request.auth.uid ||
-          get(/databases/$(database)/documents/chats/$(chatId)).data.employerId
-            == request.auth.uid
+          get(/databases/$(database)/documents/chats/$(chatId))
+            .data.seekerId == request.auth.uid ||
+          get(/databases/$(database)/documents/chats/$(chatId))
+            .data.employerId == request.auth.uid
         );
         allow create: if isAuth()
           && request.resource.data.senderId == request.auth.uid
           && (
-            get(/databases/$(database)/documents/chats/$(chatId)).data.seekerId
-              == request.auth.uid ||
-            get(/databases/$(database)/documents/chats/$(chatId)).data.employerId
-              == request.auth.uid
+            get(/databases/$(database)/documents/chats/$(chatId))
+              .data.seekerId == request.auth.uid ||
+            get(/databases/$(database)/documents/chats/$(chatId))
+              .data.employerId == request.auth.uid
           );
         allow update: if isAuth()
           && resource.data.receiverId       == request.auth.uid
@@ -175,10 +165,10 @@ service cloud.firestore {
         && request.resource.data.reviewerId != request.resource.data.revieweeId
         && request.resource.data.reviewerId == request.auth.uid
         && (
-          get(/databases/$(database)/documents/applications/$(request.resource.data.applicationId)).data.seekerId
-            == request.auth.uid ||
-          get(/databases/$(database)/documents/applications/$(request.resource.data.applicationId)).data.employerId
-            == request.auth.uid
+          get(/databases/$(database)/documents/applications/$(request.resource.data.applicationId))
+            .data.seekerId == request.auth.uid ||
+          get(/databases/$(database)/documents/applications/$(request.resource.data.applicationId))
+            .data.employerId == request.auth.uid
         );
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -186,9 +176,9 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────────────────
     // NOTIFICATIONS
+    // READ: pure UID — no callerRole().
     // ──────────────────────────────────────────────────────────
     match /notifications/{notifId} {
-      // READ: pure UID — no callerRole().
       allow read:   if isAuth() && resource.data.userId == request.auth.uid;
       allow create: if isAuth();
       allow update: if isAuth() && resource.data.userId == request.auth.uid;
@@ -196,7 +186,7 @@ service cloud.firestore {
     }
 
     // ──────────────────────────────────────────────────────────
-    // REVIEWS (legacy)
+    // REVIEWS
     // ──────────────────────────────────────────────────────────
     match /reviews/{reviewId} {
       allow read:   if isAuth();
