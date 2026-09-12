@@ -79,6 +79,14 @@
         { "fieldPath": "kycStatus", "order": "ASCENDING" },
         { "fieldPath": "kycSubmittedAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "escrows",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "jobId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

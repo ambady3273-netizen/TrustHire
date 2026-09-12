@@ -439,12 +439,117 @@ class _AllUsersTab extends ConsumerWidget {
   }
 }
 
-class _UserRow extends StatelessWidget {
+class _UserRow extends ConsumerStatefulWidget {
   final UserModel user;
   const _UserRow({required this.user});
 
   @override
+  ConsumerState<_UserRow> createState() => _UserRowState();
+}
+
+class _UserRowState extends ConsumerState<_UserRow> {
+  bool _loading = false;
+
+  Future<void> _toggleSuspend() async {
+    final u = widget.user;
+    final isSuspending = !u.suspended;
+    String reason = '';
+
+    if (isSuspending) {
+      final ctrl = TextEditingController();
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Suspend User?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Suspending ${u.fullName}. They will see a suspension '
+                  'message and cannot use the app until reinstated.'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Reason for suspension…',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.coral),
+              child: const Text('Suspend'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      reason = ctrl.text.trim().isNotEmpty
+          ? ctrl.text.trim()
+          : 'Suspended by administrator.';
+      ctrl.dispose();
+    } else {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Reinstate User?'),
+          content: Text(
+              'Remove the suspension on ${u.fullName}? '
+              'They will regain full access to the app.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+              child: const Text('Reinstate'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      final adminUid = ref.read(currentFirebaseUserProvider)?.uid ?? '';
+      final fs = ref.read(firestoreServiceProvider);
+      if (isSuspending) {
+        await fs.suspendUser(
+            uid: u.uid, adminUid: adminUid, reason: reason);
+      } else {
+        await fs.unsuspendUser(u.uid);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isSuspending
+            ? '${u.fullName} suspended.'
+            : '${u.fullName} reinstated.'),
+        backgroundColor:
+            isSuspending ? AppColors.coral : AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = widget.user;
     BadgeType badgeType;
     String badgeLabel;
     switch (user.kycStatus) {
@@ -466,30 +571,91 @@ class _UserRow extends StatelessWidget {
     }
 
     return AppCard(
-      child: Row(
+      borderColor: user.suspended ? AppColors.coral : null,
+      borderWidth: user.suspended ? 2 : 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Avatar(),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(user.fullName,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 2),
-                Text(user.email,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.mute),
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(user.role,
-                    style: const TextStyle(
-                        fontSize: 10.5, color: AppColors.marigoldDark)),
-              ],
-            ),
+          Row(
+            children: [
+              const Avatar(),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user.fullName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                    const SizedBox(height: 2),
+                    Text(user.email,
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.mute),
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(user.role,
+                        style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.marigoldDark)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AppBadge(badgeLabel, type: badgeType),
+                  if (user.suspended) ...[
+                    const SizedBox(height: 4),
+                    const AppBadge('Suspended', type: BadgeType.danger),
+                  ],
+                ],
+              ),
+            ],
           ),
-          AppBadge(badgeLabel, type: badgeType),
+          if (user.suspended && user.suspendedReason.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text('Reason: ${user.suspendedReason}',
+                style: const TextStyle(
+                    fontSize: 10.5, color: AppColors.coral)),
+          ],
+          const SizedBox(height: 10),
+          _loading
+              ? const Center(
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)))
+              : SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _toggleSuspend,
+                    icon: Icon(
+                      user.suspended
+                          ? Icons.lock_open_rounded
+                          : Icons.block_rounded,
+                      size: 16,
+                      color: user.suspended
+                          ? AppColors.teal
+                          : AppColors.coral,
+                    ),
+                    label: Text(
+                      user.suspended ? 'Reinstate Account' : 'Suspend Account',
+                      style: TextStyle(
+                          color: user.suspended
+                              ? AppColors.teal
+                              : AppColors.coral),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                          color: user.suspended
+                              ? AppColors.teal
+                              : AppColors.coral),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
         ],
       ),
     );

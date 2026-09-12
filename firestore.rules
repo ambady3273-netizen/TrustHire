@@ -191,6 +191,22 @@ service cloud.firestore {
     }
 
     // ──────────────────────────────────────────────────────────
+    // ESCROWS
+    // ──────────────────────────────────────────────────────────
+    match /escrows/{escrowId} {
+      // Only the employer who created the escrow or admins can read.
+      allow read: if isAuth() && (
+        resource.data.employerId == request.auth.uid || isAdmin()
+      );
+      // Employers create escrow records.
+      allow create: if isEmployer()
+        && request.resource.data.employerId == request.auth.uid;
+      // Only admin can update (status changes server-side via Cloud Function).
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ──────────────────────────────────────────────────────────
     // RATINGS
     // ──────────────────────────────────────────────────────────
     match /ratings/{ratingId} {

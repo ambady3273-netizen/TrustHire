@@ -91,6 +91,28 @@ class FirestoreService {
     });
   }
 
+  /// Suspend a user account (admin only).
+  Future<void> suspendUser({
+    required String uid,
+    required String adminUid,
+    required String reason,
+  }) async {
+    await users.doc(uid).update({
+      'suspended':       true,
+      'suspendedReason': reason,
+      'suspendedBy':     adminUid,
+    });
+  }
+
+  /// Reinstate a previously suspended account (admin only).
+  Future<void> unsuspendUser(String uid) async {
+    await users.doc(uid).update({
+      'suspended':       false,
+      'suspendedReason': '',
+      'suspendedBy':     '',
+    });
+  }
+
   /// Update Verification — used by admin after KYC review.
   Future<void> verifyUser(String uid, bool verified) async {
     await users.doc(uid).update({'verified': verified});
@@ -750,6 +772,58 @@ class FirestoreService {
       {'fcmToken': token},
       SetOptions(merge: true),
     );
+  }
+
+  // ============================================================
+  // ESCROW COLLECTION
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get escrows =>
+      _firestore.collection('escrows');
+
+  /// Record a successful Razorpay payment as an escrow document.
+  Future<void> recordEscrow({
+    required String jobId,
+    required String applicationId,
+    required String employerId,
+    required int amount,
+    required String paymentId,
+  }) async {
+    await escrows.add({
+      'jobId':         jobId,
+      'applicationId': applicationId,
+      'employerId':    employerId,
+      'amount':        amount,
+      'paymentId':     paymentId,
+      'status':        'funded',
+      'createdAt':     FieldValue.serverTimestamp(),
+      'updatedAt':     FieldValue.serverTimestamp(),
+    });
+    // Mark the job as escrow-funded.
+    await jobs.doc(jobId).update({'escrowFunded': true});
+  }
+
+  /// Release escrowed payment after employer confirms work completion.
+  Future<void> releaseEscrow({
+    required String jobId,
+    required String applicationId,
+  }) async {
+    // Update the matching escrow document.
+    final snap = await escrows
+        .where('jobId', isEqualTo: jobId)
+        .where('status', isEqualTo: 'funded')
+        .limit(1)
+        .get();
+    if (snap.docs.isNotEmpty) {
+      await snap.docs.first.reference.update({
+        'status':    'released',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    // Mark the application as completed.
+    if (applicationId.isNotEmpty) {
+      await updateApplicationStatus(applicationId, ApplicationStatus.completed);
+    }
   }
 
   // ============================================================

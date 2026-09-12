@@ -52,7 +52,13 @@ class AuthGate extends ConsumerWidget {
           );
         }
 
-        // ── Signed in — route by role ─────────────────────────
+        // ── Signed in — check suspension then route by role ──
+        if (userModel.suspended) {
+          return _SuspendedScreen(
+            reason: userModel.suspendedReason,
+            onLogout: () => ref.read(authProvider.notifier).logout(),
+          );
+        }
         return _RoleRouter(role: userModel.role);
       },
     );
@@ -423,6 +429,88 @@ class _UnknownRoleScreen extends StatelessWidget {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14))),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Suspended account screen
+// ─────────────────────────────────────────────────────────────
+
+class _SuspendedScreen extends StatelessWidget {
+  final String reason;
+  final Future<void> Function() onLogout;
+  const _SuspendedScreen({required this.reason, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.paper,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.coralLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.block_rounded,
+                    size: 38, color: AppColors.coral),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Account Suspended',
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                reason.isNotEmpty
+                    ? 'Reason: $reason'
+                    : 'Your account has been suspended. '
+                        'Please contact support for assistance.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.mute, height: 1.5),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'If you believe this is a mistake, contact:\nsupport@trusthire.app',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.mute),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await onLogout();
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/login', (r) => false);
+                    }
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Logout'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.coral,
+                    side: const BorderSide(color: AppColors.coral),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
