@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/application_model.dart';
+import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
 import '../../theme.dart';
@@ -75,7 +76,26 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
         updatedAt: now,
       );
 
-      await firestore.applyForJob(application);
+      final appId = await firestore.applyForJob(application);
+
+      // ── Notify the employer that a new applicant has applied ──
+      try {
+        await firestore.createNotification(NotificationModel(
+          id: '',
+          userId: job.employerId,
+          title: 'New Applicant',
+          body:
+              '${application.seekerName.isNotEmpty ? application.seekerName : 'Someone'} '
+              'applied for "${job.title}".',
+          type: NotificationType.newApplicant,
+          isRead: false,
+          createdAt: DateTime.now(),
+          actionRoute: '/applicants',
+          actionId: appId,
+        ));
+      } catch (_) {
+        // Notification failure must never block the apply flow.
+      }
 
       if (!mounted) return;
       await _checkExistingApplication();

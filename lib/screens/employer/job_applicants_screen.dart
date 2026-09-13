@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/application_model.dart';
+import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
@@ -254,6 +255,28 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
     try {
       final fs = ref.read(firestoreServiceProvider);
       await fs.updateApplicationStatus(widget.application.id, newStatus);
+
+      // ── Notify the seeker of the decision ──
+      try {
+        final app = widget.application;
+        await fs.createNotification(NotificationModel(
+          id: '',
+          userId: app.seekerId,
+          title: isAccept ? 'Application Accepted 🎉' : 'Application Update',
+          body: isAccept
+              ? 'Congratulations! Your application for "${app.jobTitle}" has been accepted.'
+              : 'Your application for "${app.jobTitle}" was not selected this time.',
+          type: isAccept
+              ? NotificationType.shortlisted
+              : NotificationType.general,
+          isRead: false,
+          createdAt: DateTime.now(),
+          actionRoute: '/myApplications',
+          actionId: app.id,
+        ));
+      } catch (_) {
+        // Notification failure must never block the accept/reject flow.
+      }
 
       // Auto-create chat when accepting.
       if (isAccept) {
