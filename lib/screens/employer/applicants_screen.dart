@@ -6,6 +6,7 @@ import '../../models/application_model.dart';
 import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../services/local_notification_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -159,6 +160,17 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
       } catch (_) {
         // Notification failure must never block the accept/reject flow.
       }
+
+      // ── Local OS popup on the employer's own phone ────────
+      LocalNotificationService.instance.show(
+        title: isAccept
+            ? 'Applicant Accepted ✓'
+            : 'Applicant Rejected',
+        body: isAccept
+            ? '${widget.application.seekerName} has been accepted.'
+            : '${widget.application.seekerName} has been rejected.',
+        payload: '/applicants',
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -6,6 +6,7 @@ import '../../models/application_model.dart';
 import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../services/local_notification_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -78,7 +79,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
 
       final appId = await firestore.applyForJob(application);
 
-      // ── Notify the employer that a new applicant has applied ──
+      // ── Notify the employer (in-app Firestore notification) ──
       try {
         await firestore.createNotification(NotificationModel(
           id: '',
@@ -96,6 +97,13 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
       } catch (_) {
         // Notification failure must never block the apply flow.
       }
+
+      // ── Local OS popup on the seeker's own phone ─────────
+      LocalNotificationService.instance.show(
+        title: 'Application Sent ✓',
+        body: 'Your application for "${job.title}" has been submitted.',
+        payload: '/myApplications',
+      );
 
       if (!mounted) return;
       await _checkExistingApplication();

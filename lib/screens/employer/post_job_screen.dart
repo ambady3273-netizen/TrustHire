@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/job_model.dart';
 import '../../services/firestore_service.dart';
+import '../../services/local_notification_service.dart';
 import '../../services/scam_detector.dart';
 
 class PostJobScreen extends StatefulWidget {
@@ -236,6 +237,25 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
       await FirestoreService.instance.createJob(
         job,
+      );
+
+      // ── Notify all job seekers about the new listing ──────
+      // This writes an in-app notification for every seeker.
+      // Their bell badge increments automatically.
+      FirestoreService.instance.notifyAllSeekers(
+        title: 'New Job Posted 🆕',
+        body:
+            '"${job.title}" at ${job.companyName} · ${job.location} — ₹${job.salary.toStringAsFixed(0)}/mo',
+        actionRoute: '/seekerDashboard',
+      );
+
+      // ── Local OS popup on the employer's own device ───────
+      LocalNotificationService.instance.show(
+        title: status == 'approved' ? 'Job Published ✓' : 'Job Submitted for Review',
+        body: status == 'approved'
+            ? '"${job.title}" is now live for seekers.'
+            : '"${job.title}" is under admin review.',
+        payload: '/employerDashboard',
       );
 
       if (!mounted) return;

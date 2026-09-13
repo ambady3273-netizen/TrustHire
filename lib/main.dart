@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 import 'services/fcm_service.dart';
+import 'services/local_notification_service.dart';
 import 'theme.dart';
 
 import 'screens/auth/auth_gate.dart';
@@ -60,6 +61,7 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FcmService.instance.init(ref: ref, navigatorKey: navigatorKey);
+      LocalNotificationService.instance.init();
     });
   }
 

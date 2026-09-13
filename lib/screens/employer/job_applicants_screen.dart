@@ -7,6 +7,7 @@ import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../services/local_notification_service.dart';
 import '../../screens/employer/employer_jobs_screen.dart'
     show selectedEmployerJobProvider;
 import '../../theme.dart';
@@ -286,6 +287,15 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
           employerName: userModel?.fullName ?? 'Employer',
         );
       }
+
+      // ── Local OS popup on the employer's own phone ────────
+      LocalNotificationService.instance.show(
+        title: isAccept ? 'Applicant Accepted ✓' : 'Applicant Rejected',
+        body: isAccept
+            ? '$name is now accepted. A chat has been created.'
+            : '$name has been rejected.',
+        payload: '/applicants',
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -921,6 +921,52 @@ class FirestoreService {
   }
 
   // ─────────────────────────────────────────────────────────
+  // Notify all job seekers — e.g. when a new job is posted.
+  // Uses a batched write (max 500 per batch).
+  // ─────────────────────────────────────────────────────────
+
+  Future<void> notifyAllSeekers({
+    required String title,
+    required String body,
+    String? actionRoute,
+    String? actionId,
+  }) async {
+    try {
+      final snap = await users
+          .where('role', isEqualTo: 'job_seeker')
+          .get();
+      if (snap.docs.isEmpty) return;
+
+      const batchSize = 400;
+      var batch = _firestore.batch();
+      int count = 0;
+
+      for (final doc in snap.docs) {
+        final ref = notifications.doc();
+        batch.set(ref, {
+          'userId': doc.id,
+          'title': title,
+          'body': body,
+          'type': NotificationType.general.value,
+          'isRead': false,
+          'actionRoute': actionRoute,
+          'actionId': actionId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        count++;
+        if (count >= batchSize) {
+          await batch.commit();
+          batch = _firestore.batch();
+          count = 0;
+        }
+      }
+      if (count > 0) await batch.commit();
+    } catch (_) {
+      // Never block the job posting flow.
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
   // PRIVATE HELPER — fire-and-forget in-app notification
   // ─────────────────────────────────────────────────────────
 
