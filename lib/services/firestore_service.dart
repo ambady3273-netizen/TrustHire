@@ -836,19 +836,24 @@ class FirestoreService {
   Stream<List<NotificationModel>> getNotifications(String uid) {
     return notifications
         .where('userId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs
-            .map((d) => NotificationModel.fromMap(d.data(), d.id))
-            .toList());
+        .map((s) {
+      final list = s.docs
+          .map((d) => NotificationModel.fromMap(d.data(), d.id))
+          .toList();
+      // Sort in Dart — avoids composite index requirement entirely
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
   }
 
   Stream<int> getUnreadCount(String uid) {
     return notifications
         .where('userId', isEqualTo: uid)
-        .where('isRead', isEqualTo: false)
         .snapshots()
-        .map((s) => s.docs.length);
+        .map((s) => s.docs
+            .where((d) => (d.data()['isRead'] ?? false) == false)
+            .length);
   }
 
   Future<void> createNotification(NotificationModel n) async {
