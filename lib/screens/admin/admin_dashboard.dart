@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/notifications_provider.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -56,6 +57,7 @@ class AdminDashboard extends ConsumerWidget {
           ],
         ),
         actions: [
+          _NotifBell(),
           IconButton(
             tooltip: 'My Profile',
             icon: const Icon(Icons.person_outline),
@@ -286,6 +288,56 @@ class _QuickAction extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Bell icon with live unread badge (same pattern as other dashboards)
+// ─────────────────────────────────────────────────────────────
+
+class _NotifBell extends ConsumerWidget {
+  const _NotifBell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final countAsync = ref.watch(unreadNotificationCountProvider);
+    final count = countAsync.valueOrNull ?? 0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          tooltip: 'Notifications',
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () => Navigator.pushNamed(context, '/notifications'),
+        ),
+        if (count > 0)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.coral,
+                  shape: BoxShape.circle,
+                ),
+                constraints:
+                    const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

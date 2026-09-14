@@ -6,6 +6,8 @@ import '../../models/application_model.dart';
 import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../screens/shared/rating_screen.dart'
+    show selectedApplicationForRatingProvider;
 import '../../services/local_notification_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
@@ -196,16 +198,19 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
     final isActionable = ApplicationStatus.isActionable(app.status);
     final isAccepted = app.status == ApplicationStatus.accepted;
     final isRejected = app.status == ApplicationStatus.rejected;
+    final isCompleted = app.status == ApplicationStatus.completed;
 
     final borderColor = isAccepted
         ? AppColors.teal
         : isRejected
             ? AppColors.coral
-            : null;
+            : isCompleted
+                ? AppColors.ink
+                : null;
 
     return AppCard(
       borderColor: borderColor,
-      borderWidth: (isAccepted || isRejected) ? 2 : 1,
+      borderWidth: (isAccepted || isRejected || isCompleted) ? 2 : 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -241,7 +246,7 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
             ],
           ),
 
-          // Action buttons — only when employer can still act
+          // Accept / Reject buttons — only when employer can still act
           if (isActionable) ...[
             const SizedBox(height: 12),
             _isUpdating
@@ -271,6 +276,31 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                       ),
                     ],
                   ),
+          ],
+
+          // Rate button — only for completed jobs
+          if (isCompleted) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ref
+                      .read(selectedApplicationForRatingProvider.notifier)
+                      .state = app;
+                  Navigator.pushNamed(context, '/rateScreen');
+                },
+                icon: const Icon(Icons.star_outline_rounded, size: 15),
+                label: const Text('Rate this Worker'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.marigoldDark,
+                  side: const BorderSide(color: AppColors.marigoldDark),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
           ],
         ],
       ),

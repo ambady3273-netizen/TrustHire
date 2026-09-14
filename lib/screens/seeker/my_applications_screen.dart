@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/application_model.dart';
+import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
@@ -130,9 +131,29 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
 
     setState(() => _isWithdrawing = true);
     try {
-      await ref
-          .read(firestoreServiceProvider)
-          .withdrawApplication(widget.application.id);
+      final fs = ref.read(firestoreServiceProvider);
+      await fs.withdrawApplication(widget.application.id);
+
+      // ── Notify the employer that this applicant withdrew ──
+      try {
+        final app = widget.application;
+        await fs.createNotification(NotificationModel(
+          id: '',
+          userId: app.employerId,
+          title: 'Applicant Withdrew',
+          body:
+              '${app.seekerName.isNotEmpty ? app.seekerName : 'An applicant'} '
+              'withdrew their application for "${app.jobTitle}".',
+          type: NotificationType.general,
+          isRead: false,
+          createdAt: DateTime.now(),
+          actionRoute: '/applicants',
+          actionId: app.id,
+        ));
+      } catch (_) {
+        // Notification failure must never block the withdraw flow.
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
