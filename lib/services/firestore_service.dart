@@ -579,11 +579,15 @@ class FirestoreService {
   /// Real-time stream of messages for a chat, oldest-first.
   Stream<List<MessageModel>> watchMessages(String chatId) {
     return messagesOf(chatId)
-        .orderBy('sentAt', descending: false)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => MessageModel.fromMap(d.data(), d.id))
-            .toList());
+        .map((snap) {
+      final list = snap.docs
+          .map((d) => MessageModel.fromMap(d.data(), d.id))
+          .toList();
+      // Sort in Dart to avoid needing a composite index
+      list.sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      return list;
+    });
   }
 
   /// Real-time stream of all chats the current user participates in.
@@ -591,11 +595,19 @@ class FirestoreService {
   Stream<List<ChatModel>> watchUserChats(String uid, String fieldName) {
     return chats
         .where(fieldName, isEqualTo: uid)
-        .orderBy('updatedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => ChatModel.fromMap(d.data(), d.id))
-            .toList());
+        .map((snap) {
+      final list = snap.docs
+          .map((d) => ChatModel.fromMap(d.data(), d.id))
+          .toList();
+      // Sort newest-first in Dart
+      list.sort((a, b) {
+        final aT = a.lastMessageAt ?? DateTime(2000);
+        final bT = b.lastMessageAt ?? DateTime(2000);
+        return bT.compareTo(aT);
+      });
+      return list;
+    });
   }
 
   /// Mark all unread messages in a chat as read for the given receiver.
