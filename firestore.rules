@@ -203,6 +203,16 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────
+    // LIVE LOCATIONS
+    // Doc ID = applicationId. Seeker writes own doc; both parties read.
+    // ─────────────────────────────────────────────────────────
+    match /liveLocations/{applicationId} {
+      allow read:  if isAuth();
+      allow write: if isAuth()
+        && request.resource.data.seekerId == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────────────────
     // REVIEWS (legacy)
     // ─────────────────────────────────────────────────────────
     match /reviews/{reviewId} {

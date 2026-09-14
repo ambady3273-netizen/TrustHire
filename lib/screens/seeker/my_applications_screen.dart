@@ -7,6 +7,8 @@ import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../screens/shared/live_location_screen.dart'
+    show selectedApplicationForLocationProvider;
 import '../../screens/shared/rating_screen.dart'
     show selectedApplicationForRatingProvider;
 import '../../theme.dart';
@@ -278,7 +280,7 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
             ],
           ),
 
-          // ── Chat + Rate (accepted / completed) ────────
+          // ── Chat + Rate + Share Location (accepted / completed) ────────
           if (isAcceptedOrDone) ...[
             const SizedBox(height: 10),
             Row(
@@ -331,6 +333,31 @@ class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            // Share live location — only when accepted (job in progress)
+            if (app.status == ApplicationStatus.accepted)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(selectedApplicationForLocationProvider
+                            .notifier)
+                        .state = app;
+                    Navigator.pushNamed(context, '/shareLocation');
+                  },
+                  icon: const Icon(Icons.my_location, size: 15),
+                  label: const Text('Share Live Location'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.teal,
+                    side: const BorderSide(color: AppColors.teal),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+              ),
           ],
 
           // ── Withdraw (still actionable) ───────────────

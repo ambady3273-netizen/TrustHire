@@ -7,6 +7,8 @@ import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/job_provider.dart';
+import '../../screens/shared/live_location_screen.dart'
+    show selectedApplicationForLocationProvider;
 import '../../services/local_notification_service.dart';
 import '../../screens/employer/employer_jobs_screen.dart'
     show selectedEmployerJobProvider;
@@ -392,7 +394,7 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                     ],
                   ),
           ],
-          // Chat button for accepted applicants
+          // Chat + Live Location buttons for accepted applicants
           if (isAccepted) ...[
             const SizedBox(height: 12),
             SizedBox(
@@ -404,6 +406,27 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.teal,
                   side: const BorderSide(color: AppColors.teal),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ref
+                      .read(selectedApplicationForLocationProvider.notifier)
+                      .state = app;
+                  Navigator.pushNamed(context, '/liveLocation');
+                },
+                icon: const Icon(Icons.location_on_outlined, size: 16),
+                label: const Text('Track Live Location'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.marigoldDark,
+                  side:
+                      const BorderSide(color: AppColors.marigoldDark),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),

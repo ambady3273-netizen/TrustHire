@@ -33,6 +33,7 @@ import 'screens/chat/chat_list_screen.dart';
 
 import 'screens/shared/rating_screen.dart';
 import 'screens/shared/profile_edit_screen.dart';
+import 'screens/shared/live_location_screen.dart';
 
 import 'screens/onboarding_screens.dart';
 import 'screens/notifications_screen.dart';
@@ -97,6 +98,8 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
         '/rateScreen':       (c) => const RatingScreen(),
         '/editProfile':      (c) => const ProfileEditScreen(),
         '/notifications':    (c) => const NotificationsScreen(),
+        '/liveLocation':     (c) => const LiveLocationScreen(),
+        '/shareLocation':    (c) => const SeekerLiveLocationScreen(),
         '/splash':           (c) => const SplashScreen(),
         '/role':             (c) => const RoleSelectScreen(),
         '/kyc':              (c) => const KycScreen(),

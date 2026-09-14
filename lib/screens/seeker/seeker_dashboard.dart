@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../models/job_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
 import '../../providers/notifications_provider.dart';
+import '../../services/location_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -83,6 +85,11 @@ class _SeekerBody extends ConsumerStatefulWidget {
 class _SeekerBodyState extends ConsumerState<_SeekerBody> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  bool   _nearMe = false;
+  Position? _seekerPosition;
+  bool _fetchingLocation = false;
+
+  static const double _nearMeRadiusMetres = 20000; // 20 km
 
   final List<String> _categories = [
     'All',
@@ -98,6 +105,27 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
     'Other',
   ];
 
+  Future<void> _toggleNearMe() async {
+    if (_nearMe) {
+      setState(() { _nearMe = false; _seekerPosition = null; });
+      return;
+    }
+    setState(() => _fetchingLocation = true);
+    final pos = await LocationService.instance.getCurrentPosition();
+    if (!mounted) return;
+    if (pos != null) {
+      setState(() { _seekerPosition = pos; _nearMe = true; });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not get location. Check permissions.'),
+          backgroundColor: Color(0xFFE15B4F),
+        ),
+      );
+    }
+    setState(() => _fetchingLocation = false);
+  }
+
   List<JobModel> _filter(List<JobModel> jobs) {
     return jobs.where((job) {
       final matchesSearch = _searchQuery.isEmpty ||
@@ -108,7 +136,23 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
       final matchesCategory =
           _selectedCategory == 'All' || job.category == _selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      bool matchesNearMe = true;
+      if (_nearMe && _seekerPosition != null) {
+        if (job.latitude != null && job.longitude != null) {
+          final dist = Geolocator.distanceBetween(
+            _seekerPosition!.latitude,
+            _seekerPosition!.longitude,
+            job.latitude!,
+            job.longitude!,
+          );
+          matchesNearMe = dist <= _nearMeRadiusMetres;
+        } else {
+          // Job has no pinned GPS — exclude when Near Me is active
+          matchesNearMe = false;
+        }
+      }
+
+      return matchesSearch && matchesCategory && matchesNearMe;
     }).toList();
   }
 
@@ -152,6 +196,54 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
             ),
           ),
         ),
+
+        // Near Me toggle
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: GestureDetector(
+            onTap: _fetchingLocation ? null : _toggleNearMe,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: _nearMe ? AppColors.teal : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: _nearMe ? AppColors.teal : AppColors.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _fetchingLocation
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.teal),
+                        )
+                      : Icon(
+                          Icons.near_me,
+                          size: 13,
+                          color: _nearMe ? Colors.white : AppColors.mute,
+                        ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _nearMe ? 'Near Me (20 km) ✓' : 'Near Me',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: _nearMe ? Colors.white : AppColors.mute,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
 
         // Category filter chips
         SizedBox(
@@ -216,7 +308,10 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
                     const EdgeInsets.only(top: 8, bottom: 80),
                 itemCount: filtered.length,
                 itemBuilder: (context, i) =>
-                    _JobCard(job: filtered[i]),
+                    _JobCard(
+                      job: filtered[i],
+                      seekerPosition: _seekerPosition,
+                    ),
               );
             },
           ),
@@ -232,15 +327,29 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
 
 class _JobCard extends ConsumerWidget {
   final JobModel job;
-  const _JobCard({required this.job});
+  final Position? seekerPosition;
+  const _JobCard({required this.job, this.seekerPosition});
+
+  String? _distanceLabel() {
+    if (seekerPosition == null) return null;
+    if (job.latitude == null || job.longitude == null) return null;
+    final metres = Geolocator.distanceBetween(
+      seekerPosition!.latitude,
+      seekerPosition!.longitude,
+      job.latitude!,
+      job.longitude!,
+    );
+    if (metres < 1000) return '${metres.toStringAsFixed(0)} m away';
+    return '${(metres / 1000).toStringAsFixed(1)} km away';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isVerified = job.status == 'approved' && job.riskScore < 31;
+    final distLabel = _distanceLabel();
 
     return InkWell(
       onTap: () {
-        // Store selected job so JobDetailsScreen can read it.
         ref.read(selectedJobProvider.notifier).state = job;
         Navigator.pushNamed(context, '/jobDetails');
       },
@@ -257,12 +366,29 @@ class _JobCard extends ConsumerWidget {
                       ? BadgeType.verified
                       : BadgeType.warn,
                 ),
-                Text(
-                  job.category,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: AppColors.mute,
-                  ),
+                Row(
+                  children: [
+                    if (distLabel != null) ...[
+                      const Icon(Icons.near_me,
+                          size: 11, color: AppColors.teal),
+                      const SizedBox(width: 3),
+                      Text(
+                        distLabel,
+                        style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.teal,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      job.category,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.mute,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

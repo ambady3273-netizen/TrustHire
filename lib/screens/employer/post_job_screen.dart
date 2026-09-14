@@ -1,10 +1,12 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../models/job_model.dart';
 import '../../services/firestore_service.dart';
 import '../../services/local_notification_service.dart';
+import '../../services/location_service.dart';
 import '../../services/scam_detector.dart';
 
 class PostJobScreen extends StatefulWidget {
@@ -47,6 +49,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   bool _isAnalyzing = false;
   bool _isPosting = false;
+  bool _isPinningLocation = false;
+
+  /// GPS coordinates pinned by the employer for the job site.
+  Position? _pinnedPosition;
 
   ScamDetectionResult? _analysisResult;
 
@@ -112,6 +118,31 @@ class _PostJobScreenState extends State<PostJobScreen> {
     }
 
     return null;
+  }
+
+  // ============================================================
+  // PIN LOCATION
+  // ============================================================
+
+  Future<void> _pinLocation() async {
+    setState(() => _isPinningLocation = true);
+    try {
+      final pos = await LocationService.instance.getCurrentPosition();
+      if (pos != null && mounted) {
+        setState(() => _pinnedPosition = pos);
+        _showMessage(
+          'Location pinned: ${pos.latitude.toStringAsFixed(5)}, '
+          '${pos.longitude.toStringAsFixed(5)}',
+        );
+      } else if (mounted) {
+        _showMessage(
+          'Could not get location. Check permissions.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPinningLocation = false);
+    }
   }
 
   // ============================================================
@@ -230,6 +261,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         location: _locationController.text.trim(),
         salary: salary,
         contact: _contactController.text.trim(),
+        latitude:  _pinnedPosition?.latitude,
+        longitude: _pinnedPosition?.longitude,
         riskScore: _analysisResult!.riskScore,
         status: status,
         createdAt: DateTime.now(),
@@ -700,6 +733,40 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       _requiredValidator(
                     value,
                     'Location',
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── GPS pin button ─────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isPinningLocation ? null : _pinLocation,
+                    icon: _isPinningLocation
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            _pinnedPosition != null
+                                ? Icons.location_on
+                                : Icons.my_location,
+                            color: _pinnedPosition != null
+                                ? Colors.green
+                                : null,
+                          ),
+                    label: Text(
+                      _pinnedPosition != null
+                          ? '✓ GPS Pinned  '
+                              '(${_pinnedPosition!.latitude.toStringAsFixed(4)}, '
+                              '${_pinnedPosition!.longitude.toStringAsFixed(4)})'
+                          : 'Pin My GPS Location (optional)',
+                      style: TextStyle(
+                        color: _pinnedPosition != null ? Colors.green : null,
+                      ),
+                    ),
                   ),
                 ),
 

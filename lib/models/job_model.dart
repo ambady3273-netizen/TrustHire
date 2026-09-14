@@ -11,6 +11,11 @@ class JobModel {
   final double salary;
   final String contact;
 
+  /// GPS coordinates of the job site (set by employer when posting).
+  /// null means employer did not pin a location.
+  final double? latitude;
+  final double? longitude;
+
   final int riskScore;
   final String status;
 
@@ -29,6 +34,8 @@ class JobModel {
     required this.location,
     required this.salary,
     required this.contact,
+    this.latitude,
+    this.longitude,
     required this.riskScore,
     required this.status,
     this.scamReasons = const [],
@@ -64,6 +71,8 @@ class JobModel {
       location: map['location'] ?? '',
       salary: (map['salary'] ?? 0).toDouble(),
       contact: map['contact'] ?? '',
+      latitude:  (map['latitude']  as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
       riskScore: (map['riskScore'] ?? 0).toInt(),
       status: map['status'] ?? 'pending_review',
 
@@ -91,6 +100,8 @@ class JobModel {
     String? location,
     double? salary,
     String? contact,
+    double? latitude,
+    double? longitude,
     int? riskScore,
     String? status,
     List<String>? scamReasons,
@@ -107,6 +118,8 @@ class JobModel {
       location: location ?? this.location,
       salary: salary ?? this.salary,
       contact: contact ?? this.contact,
+      latitude:  latitude  ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       riskScore: riskScore ?? this.riskScore,
       status: status ?? this.status,
       scamReasons: scamReasons ?? this.scamReasons,
@@ -129,6 +142,8 @@ class JobModel {
       'location': location,
       'salary': salary,
       'contact': contact,
+      'latitude':  latitude,
+      'longitude': longitude,
 
       'riskScore': riskScore,
       'status': status,
