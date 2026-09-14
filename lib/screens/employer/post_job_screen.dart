@@ -930,155 +930,342 @@ class _PostJobScreenState extends State<PostJobScreen> {
   }
 
   // ============================================================
-  // ANALYSIS CARD
+  // ANALYSIS CARD — Advanced v2.0
   // ============================================================
 
-  Widget _buildAnalysisCard(
-    ScamDetectionResult result,
-  ) {
-    final Color color;
+  Widget _buildAnalysisCard(ScamDetectionResult result) {
+    final Color primary;
+    final Color bgColor;
+    final IconData headerIcon;
+    final String verdict;
 
     if (result.isSafe) {
-      color = Colors.green;
+      primary    = const Color(0xFF1AAE9F); // teal
+      bgColor    = const Color(0xFFE6F7F6);
+      headerIcon = Icons.verified_user_rounded;
+      verdict    = '✅ This job looks safe to post';
     } else if (result.needsReview) {
-      color = Colors.orange;
+      primary    = const Color(0xFFF0A500); // amber
+      bgColor    = const Color(0xFFFFF8E1);
+      headerIcon = Icons.policy_rounded;
+      verdict    = '⚠️ Admin will review before publishing';
     } else {
-      color = Colors.red;
+      primary    = const Color(0xFFE15B4F); // coral
+      bgColor    = const Color(0xFFFFEBEB);
+      headerIcon = Icons.gpp_bad_rounded;
+      verdict    = '🚨 High risk — job cannot be posted';
     }
 
-    final IconData icon;
+    return Container(
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border:       Border.all(color: primary.withAlpha(120), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color:      primary.withAlpha(30),
+            blurRadius: 12,
+            offset:     const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-    if (result.isSafe) {
-      icon = Icons.verified_user;
-    } else if (result.needsReview) {
-      icon = Icons.warning_amber_rounded;
-    } else {
-      icon = Icons.gpp_bad;
-    }
-
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
+          // ── Header ────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:        bgColor,
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(14)),
+            ),
+            child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: color,
-                  size: 30,
-                ),
+                Icon(headerIcon, color: primary, size: 32),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'TrustHire Safety Analysis',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 18),
-
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Risk Score',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${result.riskScore}/100',
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            LinearProgressIndicator(
-              value: result.riskScore / 100,
-              minHeight: 8,
-            ),
-
-            const SizedBox(height: 14),
-
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(10),
-              ),
-              child: Text(
-                result.riskLevel,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            const Text(
-              'Detection Details',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            ...result.reasons.map(
-              (reason) {
-                return Padding(
-                  padding:
-                      const EdgeInsets.only(
-                    bottom: 7,
-                  ),
-                  child: Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        result.isSafe
-                            ? Icons.check_circle
-                            : Icons.warning_amber,
-                        size: 18,
-                        color: color,
+                      const Text(
+                        'TrustHire AI Safety Report',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(reason),
+                      const SizedBox(height: 2),
+                      Text(
+                        verdict,
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            color: primary,
+                            fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                // ── Score meter ──────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Risk Score',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color:        primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(20),
+                        border:       Border.all(color: primary),
+                      ),
+                      child: Text(
+                        '${result.riskScore} / 100',
+                        style: TextStyle(
+                            color:      primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize:   16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value:     result.riskScore / 100,
+                    minHeight: 10,
+                    backgroundColor: primary.withAlpha(30),
+                    valueColor: AlwaysStoppedAnimation<Color>(primary),
+                  ),
+                ),
+
+                // ── Threshold legend ─────────────────────────
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text('0 — Safe',
+                        style: TextStyle(
+                            fontSize: 9.5, color: Color(0xFF1AAE9F))),
+                    Text('26 — Review',
+                        style: TextStyle(
+                            fontSize: 9.5, color: Color(0xFFF0A500))),
+                    Text('56 — High Risk',
+                        style: TextStyle(
+                            fontSize: 9.5, color: Color(0xFFE15B4F))),
+                  ],
+                ),
+
+                // ── Category breakdown ───────────────────────
+                if (result.categoryScores.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text('Risk by Category',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  ...(() {
+                    final entries = result.categoryScores.entries
+                        .where((e) => e.value > 0)
+                        .toList()
+                      ..sort((a, b) => b.value.compareTo(a.value));
+                    return entries.take(6).map((e) {
+                      final catColor = _categoryColor(e.key);
+                      final barWidth = (e.value / 50).clamp(0.0, 1.0);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(e.key,
+                                    style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600)),
+                                Text('+${e.value}',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color:      catColor,
+                                        fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value:           barWidth,
+                                minHeight:       5,
+                                backgroundColor: catColor.withAlpha(30),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    catColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList();
+                  })(),
+                ],
+
+                // ── Signals detail ───────────────────────────
+                if (result.signals.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text('Detection Details',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  ...result.signals.map((s) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Icon(
+                                _severityIcon(s.severity),
+                                size:  16,
+                                color: _severityColor(s.severity),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _severityColor(s.severity)
+                                          .withAlpha(20),
+                                      borderRadius:
+                                          BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      s.category.toUpperCase(),
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          color: _severityColor(
+                                              s.severity),
+                                          letterSpacing: 0.5),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(s.message,
+                                      style: const TextStyle(
+                                          fontSize: 12, height: 1.4)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ] else ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: const [
+                      Icon(Icons.check_circle_rounded,
+                          color: Color(0xFF1AAE9F), size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'No scam indicators detected. '
+                          'Job looks legitimate.',
+                          style: TextStyle(
+                              color:    Color(0xFF1AAE9F),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                // ── Analysis summary footer ──────────────────
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color:        const Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.psychology_alt_outlined,
+                          size: 16, color: Color(0xFF5B6478)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Analyzed by TrustHire AI v2.0 · '
+                          '15 detection layers · '
+                          '${result.signals.length} signal${result.signals.length == 1 ? '' : 's'} found',
+                          style: const TextStyle(
+                              fontSize: 10.5, color: Color(0xFF5B6478)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Color _categoryColor(String category) {
+    switch (category) {
+      case 'Financial Fraud':      return const Color(0xFFE15B4F);
+      case 'MLM / Pyramid':        return const Color(0xFFD32F2F);
+      case 'Data Harvesting':      return const Color(0xFF9C27B0);
+      case 'Urgency / Pressure':   return const Color(0xFFFF6F00);
+      case 'Communication':        return const Color(0xFF1565C0);
+      case 'WFH / Online Fraud':   return const Color(0xFF00838F);
+      case 'Linguistic Deception': return const Color(0xFFAD1457);
+      case 'Fake Credentials':     return const Color(0xFF4E342E);
+      case 'Salary Intelligence':  return const Color(0xFFF57F17);
+      case 'Implausibility':       return const Color(0xFF283593);
+      case 'Pattern Analysis':     return const Color(0xFF6A1B9A);
+      default:                     return const Color(0xFF5B6478);
+    }
+  }
+
+  Color _severityColor(String severity) {
+    switch (severity) {
+      case 'critical': return const Color(0xFFB71C1C);
+      case 'high':     return const Color(0xFFE15B4F);
+      case 'medium':   return const Color(0xFFF0A500);
+      default:         return const Color(0xFF5B6478);
+    }
+  }
+
+  IconData _severityIcon(String severity) {
+    switch (severity) {
+      case 'critical': return Icons.dangerous_rounded;
+      case 'high':     return Icons.warning_rounded;
+      case 'medium':   return Icons.info_rounded;
+      default:         return Icons.circle_outlined;
+    }
   }
 
   // ============================================================
