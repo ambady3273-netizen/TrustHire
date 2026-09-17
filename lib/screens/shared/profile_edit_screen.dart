@@ -280,6 +280,73 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                             fontSize: 16, fontWeight: FontWeight.w700)),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // ── Quick links ────────────────────────────────
+            _ProfileLink(
+              icon:  Icons.work_history_outlined,
+              label: 'Work History',
+              color: AppColors.teal,
+              onTap: () => Navigator.pushNamed(context, '/workHistory'),
+            ),
+            const SizedBox(height: 10),
+            _ProfileLink(
+              icon:  Icons.people_alt_outlined,
+              label: 'Refer a Friend',
+              color: AppColors.marigoldDark,
+              onTap: () => Navigator.pushNamed(context, '/referral'),
+            ),
+            const SizedBox(height: 10),
+            _ProfileLink(
+              icon:  Icons.translate,
+              label: 'Language / மொழி / भाषा',
+              color: AppColors.ink,
+              onTap: () => Navigator.pushNamed(context, '/language'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileLink extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _ProfileLink({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color:        Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border:       Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink)),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.mute),
           ],
         ),
       ),

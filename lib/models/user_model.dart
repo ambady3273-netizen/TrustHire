@@ -36,6 +36,12 @@ class UserModel {
   /// UID of the admin who suspended the account.
   final String suspendedBy;
 
+  // ── Referral ────────────────────────────────────────────────
+  /// Unique referral code for this user (generated on registration).
+  final String referralCode;
+  /// UID of the user who referred this account (empty if organic).
+  final String referredBy;
+
   UserModel({
     required this.uid,
     required this.fullName,
@@ -56,6 +62,8 @@ class UserModel {
     this.suspended        = false,
     this.suspendedReason  = '',
     this.suspendedBy      = '',
+    this.referralCode     = '',
+    this.referredBy       = '',
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -79,6 +87,8 @@ class UserModel {
       suspended:       map['suspended']       ?? false,
       suspendedReason: map['suspendedReason'] ?? '',
       suspendedBy:     map['suspendedBy']     ?? '',
+      referralCode:    map['referralCode']    ?? '',
+      referredBy:      map['referredBy']      ?? '',
     );
   }
 
@@ -103,6 +113,8 @@ class UserModel {
       'suspended':       suspended,
       'suspendedReason': suspendedReason,
       'suspendedBy':     suspendedBy,
+      'referralCode':    referralCode,
+      'referredBy':      referredBy,
     };
   }
 
@@ -126,6 +138,8 @@ class UserModel {
     bool?      suspended,
     String?    suspendedReason,
     String?    suspendedBy,
+    String?    referralCode,
+    String?    referredBy,
   }) {
     return UserModel(
       uid:             uid             ?? this.uid,
@@ -147,6 +161,8 @@ class UserModel {
       suspended:       suspended       ?? this.suspended,
       suspendedReason: suspendedReason ?? this.suspendedReason,
       suspendedBy:     suspendedBy     ?? this.suspendedBy,
+      referralCode:    referralCode    ?? this.referralCode,
+      referredBy:      referredBy      ?? this.referredBy,
     );
   }
 }

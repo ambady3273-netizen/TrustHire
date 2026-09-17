@@ -8,6 +8,8 @@ import '../models/message_model.dart';
 import '../models/rating_model.dart';
 import '../models/notification_model.dart';
 import '../models/review_model.dart';
+import '../models/work_history_model.dart';
+import '../models/attendance_model.dart';
 
 class FirestoreService {
   FirestoreService();
@@ -1011,5 +1013,84 @@ class FirestoreService {
       // Never let a notification failure break the main operation.
     }
   }
-}
 
+  // ============================================================
+  // WORK HISTORY
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get workHistory =>
+      _firestore.collection('workHistory');
+
+  /// Stream all completed job entries for a seeker (portfolio).
+  Stream<List<WorkHistoryModel>> watchWorkHistory(String seekerId) {
+    return workHistory
+        .where('seekerId', isEqualTo: seekerId)
+        .snapshots()
+        .map((s) {
+      final list = s.docs
+          .map((d) => WorkHistoryModel.fromMap(d.data(), d.id))
+          .toList();
+      list.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+      return list;
+    });
+  }
+
+  /// Add a work history entry (called when application → completed).
+  Future<void> addWorkHistory(WorkHistoryModel entry) async {
+    await workHistory.add(entry.toMap());
+  }
+
+  // ============================================================
+  // ATTENDANCE / GEOFENCE
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get attendance =>
+      _firestore.collection('attendance');
+
+  /// Log a clock_in or clock_out event.
+  Future<void> logAttendance(AttendanceModel log) async {
+    await attendance.add(log.toMap());
+  }
+
+  /// Stream all attendance logs for an application.
+  Stream<List<AttendanceModel>> watchAttendanceLogs(String applicationId) {
+    return attendance
+        .where('applicationId', isEqualTo: applicationId)
+        .snapshots()
+        .map((s) {
+      final list = s.docs
+          .map((d) => AttendanceModel.fromMap(d.data(), d.id))
+          .toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
+  }
+
+  // ============================================================
+  // REFERRAL
+  // ============================================================
+
+  /// Apply referral bonus to both referrer and new user.
+  Future<void> applyReferralBonus({
+    required String referrerUid,
+    required String newUserUid,
+  }) async {
+    // +5 trust score to each
+    final batch = _firestore.batch();
+    final referrerRef = users.doc(referrerUid);
+    final newUserRef  = users.doc(newUserUid);
+    batch.update(referrerRef, {'trustScore': FieldValue.increment(5)});
+    batch.update(newUserRef,  {'trustScore': FieldValue.increment(5)});
+    await batch.commit();
+  }
+
+  /// Find user by referral code — returns uid or null.
+  Future<String?> findReferrerByCode(String code) async {
+    final snap = await users
+        .where('referralCode', isEqualTo: code.toUpperCase())
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return snap.docs.first.id;
+  }
+}

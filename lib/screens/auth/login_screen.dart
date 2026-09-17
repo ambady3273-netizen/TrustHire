@@ -213,6 +213,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 30),
 
+                // ── Phone OTP Login ───────────────────────────
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/phoneLogin'),
+                  icon: const Icon(Icons.phone_android, size: 18),
+                  label: const Text('Login with Phone OTP'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    foregroundColor: AppColors.ink,
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

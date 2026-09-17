@@ -12,10 +12,12 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
+import 'screens/auth/phone_login_screen.dart';
 
 import 'screens/seeker/seeker_dashboard.dart';
 import 'screens/seeker/job_details_screen.dart';
 import 'screens/seeker/my_applications_screen.dart';
+import 'screens/seeker/work_history_screen.dart';
 
 import 'screens/employer/employer_dashboard.dart';
 import 'screens/employer/employer_jobs_screen.dart';
@@ -34,9 +36,15 @@ import 'screens/chat/chat_list_screen.dart';
 import 'screens/shared/rating_screen.dart';
 import 'screens/shared/profile_edit_screen.dart';
 import 'screens/shared/live_location_screen.dart';
+import 'screens/shared/language_screen.dart';
+import 'screens/shared/referral_screen.dart';
+import 'screens/shared/attendance_screen.dart';
 
 import 'screens/onboarding_screens.dart';
 import 'screens/notifications_screen.dart';
+
+import 'providers/locale_provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Global navigator key — used by FcmService to navigate from
 /// background notification taps.
@@ -68,11 +76,20 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'TrustHire',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       navigatorKey: navigatorKey,
+      locale: locale,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/authGate',
       routes: {
         '/authGate':         (c) => const AuthGate(),
@@ -80,6 +97,7 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
         '/register':         (c) => const RegisterScreen(),
         '/forgotPassword':   (c) => const ForgotPasswordScreen(),
         '/verifyEmail':      (c) => const EmailVerificationScreen(),
+        '/phoneLogin':       (c) => const PhoneLoginScreen(),
         '/seekerDashboard':  (c) => const SeekerDashboard(),
         '/employerDashboard':(c) => const EmployerDashboard(),
         '/adminDashboard':   (c) => const AdminDashboard(),
@@ -100,6 +118,12 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
         '/notifications':    (c) => const NotificationsScreen(),
         '/liveLocation':     (c) => const LiveLocationScreen(),
         '/shareLocation':    (c) => const SeekerLiveLocationScreen(),
+        '/workHistory':      (c) => const WorkHistoryScreen(),
+        '/portfolio':        (c) => const SeekerPortfolioScreen(),
+        '/referral':         (c) => const ReferralScreen(),
+        '/language':         (c) => const LanguageScreen(),
+        '/geofence':         (c) => const GeofenceScreen(),
+        '/attendanceLog':    (c) => const AttendanceLogScreen(),
         '/splash':           (c) => const SplashScreen(),
         '/role':             (c) => const RoleSelectScreen(),
         '/kyc':              (c) => const KycScreen(),

@@ -102,6 +102,15 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
     'Freelance',
     'Office Work',
     'Event Work',
+    'Domestic Help',
+    'Security Guard',
+    'Driver',
+    'AC Technician',
+    'Plumber',
+    'Electrician',
+    'Salon Work',
+    'Tailoring',
+    'Construction',
     'Other',
   ];
 

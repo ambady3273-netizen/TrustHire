@@ -210,6 +210,29 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────
+    // WORK HISTORY
+    // Seeker and employer in the job can read; system writes on complete.
+    // ─────────────────────────────────────────────────────────
+    match /workHistory/{entryId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // ATTENDANCE
+    // Seeker writes own clock events; employer of same job can read.
+    // ─────────────────────────────────────────────────────────
+    match /attendance/{logId} {
+      allow read:   if isAuth();
+      allow create: if isAuth()
+        && request.resource.data.seekerId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────
     // REVIEWS (legacy)
     // ─────────────────────────────────────────────────────────
     match /reviews/{reviewId} {
