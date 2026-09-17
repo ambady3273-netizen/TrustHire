@@ -104,6 +104,89 @@ class _ApplicantCard extends ConsumerStatefulWidget {
 class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
   bool _isUpdating = false;
 
+  // ── Mark job as complete ──────────────────────────────────
+
+  Future<void> _markComplete() async {
+    final app  = widget.application;
+    final name = app.seekerName.isNotEmpty ? app.seekerName : 'this worker';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Mark Job as Complete?'),
+        content: Text(
+          'Confirm that $name has completed the work for '
+          '"${app.jobTitle}".\n\n'
+          'This will:\n'
+          '• Mark the application as Completed\n'
+          '• Add this job to ${app.seekerName.isNotEmpty ? app.seekerName : "their"} '
+          'Work Portfolio\n'
+          '• Release any escrowed payment\n'
+          '• Notify the worker',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.teal),
+            child: const Text('Mark Complete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      final fs = ref.read(firestoreServiceProvider);
+
+      // Fetch job details for work history entry
+      String location = '', category = '';
+      double salary   = 0;
+      try {
+        final jobDoc = await fs.jobs.doc(app.jobId).get();
+        if (jobDoc.exists && jobDoc.data() != null) {
+          final d = jobDoc.data()!;
+          location = d['location'] ?? '';
+          category = d['category'] ?? '';
+          salary   = (d['salary']  ?? 0).toDouble();
+        }
+      } catch (_) {}
+
+      await fs.completeJob(
+        application:  app,
+        jobLocation:  location,
+        jobSalary:    salary,
+        jobCategory:  category,
+      );
+
+      LocalNotificationService.instance.show(
+        title:   'Job Completed ✓',
+        body:    '${app.jobTitle} marked as complete for $name.',
+        payload: '/applicants',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Job marked as complete! Work history updated.'),
+        backgroundColor: AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   Future<void> _confirmAndUpdate(String newStatus) async {
     final isAccept = newStatus == ApplicationStatus.accepted;
     final confirmed = await showDialog<bool>(
@@ -278,9 +361,58 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                   ),
           ],
 
-          // Rate button — only for completed jobs
-          if (isCompleted) ...[
+          // ── Mark Complete (accepted) ─────────────────────
+          if (isAccepted) ...[
             const SizedBox(height: 12),
+            _isUpdating
+                ? const Center(
+                    child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2)))
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _markComplete,
+                      icon:  const Icon(Icons.task_alt_rounded, size: 16),
+                      label: const Text('Mark as Complete'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.ink,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+          ],
+
+          // ── Completed — badge + Rate ──────────────────────
+          if (isCompleted) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                  vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.tealLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      color: AppColors.teal, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'Job completed — Work portfolio updated',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.teal,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

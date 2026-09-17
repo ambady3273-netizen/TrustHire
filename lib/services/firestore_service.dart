@@ -1018,6 +1018,66 @@ class FirestoreService {
   // WORK HISTORY
   // ============================================================
 
+  // ── completeJob ── ─────────────────────────────────────────
+  // Single method that does everything when a job is completed:
+  //   1. Application status → completed
+  //   2. Creates a work history entry for the seeker's portfolio
+  //   3. Sends in-app notification to the seeker
+  //   4. Releases any funded escrow for this application
+  // ──────────────────────────────────────────────────────────
+
+  Future<void> completeJob({
+    required ApplicationModel application,
+    required String jobLocation,
+    required double jobSalary,
+    required String jobCategory,
+  }) async {
+    // 1 — Mark application completed
+    await updateApplicationStatus(application.id, ApplicationStatus.completed);
+
+    // 2 — Add work history entry to seeker's portfolio
+    try {
+      final entry = WorkHistoryModel(
+        id:          '',
+        seekerId:    application.seekerId,
+        employerId:  application.employerId,
+        jobId:       application.jobId,
+        jobTitle:    application.jobTitle,
+        companyName: application.companyName,
+        location:    jobLocation,
+        salary:      jobSalary,
+        category:    jobCategory,
+        completedAt: DateTime.now(),
+      );
+      await addWorkHistory(entry);
+    } catch (_) {}
+
+    // 3 — Notify the seeker
+    try {
+      await createNotification(NotificationModel(
+        id:          '',
+        userId:      application.seekerId,
+        title:       'Job Completed 🎉',
+        body:        'Your job "${application.jobTitle}" at '
+                     '${application.companyName} has been marked as '
+                     'completed. Thank you for your work!',
+        type:        NotificationType.general,
+        isRead:      false,
+        createdAt:   DateTime.now(),
+        actionRoute: '/myApplications',
+        actionId:    application.id,
+      ));
+    } catch (_) {}
+
+    // 4 — Release escrow if funded
+    try {
+      await releaseEscrow(
+        jobId:         application.jobId,
+        applicationId: application.id,
+      );
+    } catch (_) {}
+  }
+
   CollectionReference<Map<String, dynamic>> get workHistory =>
       _firestore.collection('workHistory');
 

@@ -317,20 +317,89 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
     }
   }
 
+  Future<void> _markComplete() async {
+    final app  = widget.application;
+    final job  = ref.read(selectedEmployerJobProvider);
+    final name = app.seekerName.isNotEmpty ? app.seekerName : 'this worker';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Mark Job as Complete?'),
+        content: Text(
+          'Confirm that $name has completed the work for '
+          '"${app.jobTitle}".\n\n'
+          'This will:\n'
+          '• Mark the application as Completed\n'
+          '• Add this job to ${app.seekerName.isNotEmpty ? app.seekerName : "their"} '
+          'Work Portfolio\n'
+          '• Release any escrowed payment\n'
+          '• Notify the worker',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            child: const Text('Mark Complete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await ref.read(firestoreServiceProvider).completeJob(
+        application:  app,
+        jobLocation:  job?.location  ?? '',
+        jobSalary:    job?.salary    ?? 0,
+        jobCategory:  job?.category  ?? '',
+      );
+
+      LocalNotificationService.instance.show(
+        title:   'Job Completed ✓',
+        body:    '${app.jobTitle} marked as complete for $name.',
+        payload: '/applicants',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Job marked as complete! Work history updated.'),
+        backgroundColor: AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = widget.application;
     final isActionable = ApplicationStatus.isActionable(app.status);
-    final isAccepted = app.status == ApplicationStatus.accepted;
-    final isRejected = app.status == ApplicationStatus.rejected;
+    final isAccepted  = app.status == ApplicationStatus.accepted;
+    final isRejected  = app.status == ApplicationStatus.rejected;
+    final isCompleted = app.status == ApplicationStatus.completed;
 
     return AppCard(
       borderColor: isAccepted
           ? AppColors.teal
           : isRejected
               ? AppColors.coral
-              : null,
-      borderWidth: (isAccepted || isRejected) ? 2 : 1,
+              : isCompleted
+                  ? const Color(0xFF1B2A4A)
+                  : null,
+      borderWidth: (isAccepted || isRejected || isCompleted) ? 2 : 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -394,7 +463,7 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                     ],
                   ),
           ],
-          // Chat + Live Location buttons for accepted applicants
+          // Accepted — Chat, Track Location, Mark Complete
           if (isAccepted) ...[
             const SizedBox(height: 12),
             SizedBox(
@@ -425,11 +494,58 @@ class _ApplicantCardState extends ConsumerState<_ApplicantCard> {
                 label: const Text('Track Live Location'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.marigoldDark,
-                  side:
-                      const BorderSide(color: AppColors.marigoldDark),
+                  side: const BorderSide(color: AppColors.marigoldDark),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _isUpdating
+                ? const Center(
+                    child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2)))
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _markComplete,
+                      icon: const Icon(Icons.task_alt_rounded, size: 16),
+                      label: const Text('Mark as Complete'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.ink,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+          ],
+          // Completed — show completion badge + Rate button
+          if (isCompleted) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                  vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.tealLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      color: AppColors.teal, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'Job completed — Work portfolio updated',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.teal,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
               ),
             ),
           ],
