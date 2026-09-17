@@ -18,6 +18,7 @@ import 'screens/seeker/seeker_dashboard.dart';
 import 'screens/seeker/job_details_screen.dart';
 import 'screens/seeker/my_applications_screen.dart';
 import 'screens/seeker/work_history_screen.dart';
+import 'screens/seeker/saved_jobs_screen.dart';
 
 import 'screens/employer/employer_dashboard.dart';
 import 'screens/employer/employer_jobs_screen.dart';
@@ -39,6 +40,7 @@ import 'screens/shared/live_location_screen.dart';
 import 'screens/shared/language_screen.dart';
 import 'screens/shared/referral_screen.dart';
 import 'screens/shared/attendance_screen.dart';
+import 'screens/admin/admin_analytics_screen.dart';
 
 import 'screens/onboarding_screens.dart';
 import 'screens/notifications_screen.dart';
@@ -124,6 +126,8 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
         '/language':         (c) => const LanguageScreen(),
         '/geofence':         (c) => const GeofenceScreen(),
         '/attendanceLog':    (c) => const AttendanceLogScreen(),
+        '/savedJobs':        (c) => const SavedJobsScreen(),
+        '/adminAnalytics':   (c) => const AdminAnalyticsScreen(),
         '/splash':           (c) => const SplashScreen(),
         '/role':             (c) => const RoleSelectScreen(),
         '/kyc':              (c) => const KycScreen(),

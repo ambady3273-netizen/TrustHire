@@ -6,6 +6,8 @@ import '../../models/job_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
 import '../../providers/notifications_provider.dart';
+import '../../screens/seeker/saved_jobs_screen.dart'
+    show bookmarkedIdsProvider;
 import '../../services/location_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
@@ -34,6 +36,12 @@ class SeekerDashboard extends ConsumerWidget {
         actions: [
           _NotifBell(),
           IconButton(
+            tooltip: 'Saved Jobs',
+            icon: const Icon(Icons.bookmark_outline),
+            onPressed: () =>
+                Navigator.pushNamed(context, '/savedJobs'),
+          ),
+          IconButton(
             tooltip: 'My Profile',
             icon: const Icon(Icons.person_outline),
             onPressed: () => Navigator.pushNamed(context, '/editProfile'),
@@ -56,9 +64,7 @@ class SeekerDashboard extends ConsumerWidget {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
                 Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
+                  context, '/login', (route) => false,
                 );
               }
             },
@@ -88,6 +94,9 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
   bool   _nearMe = false;
   Position? _seekerPosition;
   bool _fetchingLocation = false;
+  double _minSalary = 0;
+  double _maxSalary = 150000;
+  bool   _salaryFilterActive = false;
 
   static const double _nearMeRadiusMetres = 20000; // 20 km
 
@@ -156,15 +165,106 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
           );
           matchesNearMe = dist <= _nearMeRadiusMetres;
         } else {
-          // Job has no pinned GPS — exclude when Near Me is active
           matchesNearMe = false;
         }
       }
 
-      return matchesSearch && matchesCategory && matchesNearMe;
+      final matchesSalary = !_salaryFilterActive ||
+          (job.salary >= _minSalary && job.salary <= _maxSalary);
+
+      return matchesSearch && matchesCategory && matchesNearMe && matchesSalary;
     }).toList();
   }
 
+  void _showSalaryFilter() {
+    double tmpMin = _minSalary;
+    double tmpMax = _maxSalary;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setS) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('Salary Range',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      setS(() { tmpMin = 0; tmpMax = 150000; });
+                    },
+                    child: const Text('Reset',
+                        style: TextStyle(color: AppColors.coral)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('₹${(tmpMin / 1000).toStringAsFixed(0)}k',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.teal)),
+                  Text('₹${(tmpMax / 1000).toStringAsFixed(0)}k',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.teal)),
+                ],
+              ),
+              RangeSlider(
+                values: RangeValues(tmpMin, tmpMax),
+                min: 0,
+                max: 150000,
+                divisions: 30,
+                activeColor: AppColors.teal,
+                labels: RangeLabels(
+                  '₹${(tmpMin / 1000).toStringAsFixed(0)}k',
+                  '₹${(tmpMax / 1000).toStringAsFixed(0)}k',
+                ),
+                onChanged: (v) =>
+                    setS(() { tmpMin = v.start; tmpMax = v.end; }),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _minSalary = tmpMin;
+                      _maxSalary = tmpMax;
+                      _salaryFilterActive =
+                          !(tmpMin == 0 && tmpMax == 150000);
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Apply Filter',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final jobsAsync = ref.watch(approvedJobsProvider);
@@ -206,49 +306,98 @@ class _SeekerBodyState extends ConsumerState<_SeekerBody> {
           ),
         ),
 
-        // Near Me toggle
+        // Near Me toggle + Salary filter row
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-          child: GestureDetector(
-            onTap: _fetchingLocation ? null : _toggleNearMe,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: _nearMe ? AppColors.teal : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: _nearMe ? AppColors.teal : AppColors.border),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _fetchingLocation
-                      ? const SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.teal),
-                        )
-                      : Icon(
-                          Icons.near_me,
-                          size: 13,
-                          color: _nearMe ? Colors.white : AppColors.mute,
-                        ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _nearMe ? 'Near Me (20 km) ✓' : 'Near Me',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: _nearMe ? Colors.white : AppColors.mute,
-                    ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _fetchingLocation ? null : _toggleNearMe,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _nearMe ? AppColors.teal : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color:
+                            _nearMe ? AppColors.teal : AppColors.border),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _fetchingLocation
+                          ? const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.teal),
+                            )
+                          : Icon(Icons.near_me,
+                              size: 13,
+                              color: _nearMe
+                                  ? Colors.white
+                                  : AppColors.mute),
+                      const SizedBox(width: 5),
+                      Text(
+                        _nearMe ? 'Near Me ✓' : 'Near Me',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _nearMe
+                              ? Colors.white
+                              : AppColors.mute,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _showSalaryFilter,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _salaryFilterActive
+                        ? AppColors.marigoldDark
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: _salaryFilterActive
+                            ? AppColors.marigoldDark
+                            : AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.currency_rupee,
+                          size: 13,
+                          color: _salaryFilterActive
+                              ? Colors.white
+                              : AppColors.mute),
+                      const SizedBox(width: 4),
+                      Text(
+                        _salaryFilterActive
+                            ? '₹${(_minSalary / 1000).toStringAsFixed(0)}k–₹${(_maxSalary / 1000).toStringAsFixed(0)}k'
+                            : 'Salary',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _salaryFilterActive
+                              ? Colors.white
+                              : AppColors.mute,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
 
@@ -356,6 +505,9 @@ class _JobCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isVerified = job.status == 'approved' && job.riskScore < 31;
     final distLabel = _distanceLabel();
+    final uid = ref.watch(authServiceProvider).currentUser?.uid ?? '';
+    final bookmarkedIds = ref.watch(bookmarkedIdsProvider).valueOrNull ?? [];
+    final isBookmarked = bookmarkedIds.contains(job.id);
 
     return InkWell(
       onTap: () {
@@ -371,9 +523,7 @@ class _JobCard extends ConsumerWidget {
               children: [
                 AppBadge(
                   isVerified ? '✓ AI-verified' : '⚠ Under review',
-                  type: isVerified
-                      ? BadgeType.verified
-                      : BadgeType.warn,
+                  type: isVerified ? BadgeType.verified : BadgeType.warn,
                 ),
                 Row(
                   children: [
@@ -381,20 +531,36 @@ class _JobCard extends ConsumerWidget {
                       const Icon(Icons.near_me,
                           size: 11, color: AppColors.teal),
                       const SizedBox(width: 3),
-                      Text(
-                        distLabel,
-                        style: const TextStyle(
-                            fontSize: 10.5,
-                            color: AppColors.teal,
-                            fontWeight: FontWeight.w600),
-                      ),
+                      Text(distLabel,
+                          style: const TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.teal,
+                              fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
                     ],
-                    Text(
-                      job.category,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: AppColors.mute,
+                    Text(job.category,
+                        style: const TextStyle(
+                            fontSize: 10.5, color: AppColors.mute)),
+                    const SizedBox(width: 4),
+                    // Bookmark icon
+                    GestureDetector(
+                      onTap: () async {
+                        if (uid.isEmpty) return;
+                        final fs = ref.read(firestoreServiceProvider);
+                        if (isBookmarked) {
+                          await fs.removeBookmark(uid, job.id);
+                        } else {
+                          await fs.bookmarkJob(uid, job);
+                        }
+                      },
+                      child: Icon(
+                        isBookmarked
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                        size: 18,
+                        color: isBookmarked
+                            ? AppColors.marigoldDark
+                            : AppColors.mute,
                       ),
                     ),
                   ],
@@ -402,33 +568,22 @@ class _JobCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              job.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-              ),
-            ),
+            Text(job.title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 13.5)),
             const SizedBox(height: 2),
-            Text(
-              '${job.companyName} · ${job.location}',
-              style: const TextStyle(
-                fontSize: 11.5,
-                color: AppColors.mute,
-              ),
-            ),
+            Text('${job.companyName} · ${job.location}',
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.mute)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '₹${job.salary.toStringAsFixed(0)}/mo',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
-                    color: AppColors.ink,
-                  ),
-                ),
+                Text('₹${job.salary.toStringAsFixed(0)}/mo',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: AppColors.ink)),
                 Row(
                   children: [
                     TrustRing(
@@ -436,13 +591,9 @@ class _JobCard extends ConsumerWidget {
                       size: 28,
                     ),
                     const SizedBox(width: 5),
-                    const Text(
-                      'Trust',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppColors.mute,
-                      ),
-                    ),
+                    const Text('Trust',
+                        style: TextStyle(
+                            fontSize: 10, color: AppColors.mute)),
                   ],
                 ),
               ],

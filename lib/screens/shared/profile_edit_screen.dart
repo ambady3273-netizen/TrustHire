@@ -29,7 +29,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -52,6 +52,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
           tabs: const [
             Tab(icon: Icon(Icons.person_outline), text: 'Profile'),
             Tab(icon: Icon(Icons.verified_user_outlined), text: 'KYC'),
+            Tab(icon: Icon(Icons.work_outline), text: 'CV'),
           ],
         ),
       ),
@@ -60,6 +61,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
         children: [
           _ProfileTab(user: user),
           _KycTab(user: user),
+          _CvTab(user: user),
         ],
       ),
     );
@@ -795,6 +797,228 @@ class _UploadTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB 3 — CV / Skills
+// ═══════════════════════════════════════════════════════════════
+
+class _CvTab extends ConsumerStatefulWidget {
+  final UserModel? user;
+  const _CvTab({required this.user});
+
+  @override
+  ConsumerState<_CvTab> createState() => _CvTabState();
+}
+
+class _CvTabState extends ConsumerState<_CvTab> {
+  final _bioCtrl        = TextEditingController();
+  final _skillsCtrl     = TextEditingController();
+  final _experienceCtrl = TextEditingController();
+  bool _saving      = false;
+  bool _initialized = false;
+
+  @override
+  void dispose() {
+    _bioCtrl.dispose();
+    _skillsCtrl.dispose();
+    _experienceCtrl.dispose();
+    super.dispose();
+  }
+
+  void _init(UserModel u) {
+    if (_initialized) return;
+    _bioCtrl.text        = u.bio;
+    _skillsCtrl.text     = u.skills;
+    _experienceCtrl.text = u.experience;
+    _initialized = true;
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final uid = ref.read(authServiceProvider).currentUser?.uid;
+      if (uid == null) throw Exception('Not logged in.');
+      await ref.read(firestoreServiceProvider).updateCv(
+            uid:        uid,
+            bio:        _bioCtrl.text.trim(),
+            skills:     _skillsCtrl.text.trim(),
+            experience: _experienceCtrl.text.trim(),
+          );
+      ref.invalidate(userProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('CV updated!'),
+        backgroundColor: AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = widget.user;
+    if (user != null) _init(user);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────
+          AppCard(
+            bg: AppColors.tealLight,
+            borderColor: Colors.transparent,
+            child: const Row(
+              children: [
+                Icon(Icons.tips_and_updates_outlined,
+                    color: AppColors.teal, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'A complete CV makes employers choose you faster. '
+                    'Add your skills and experience to stand out.',
+                    style: TextStyle(fontSize: 12.5, color: AppColors.teal),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Bio ──────────────────────────────────────────
+          const Text('About Me',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.ink)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _bioCtrl,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText:
+                  'Write a short intro about yourself…\ne.g. "Hardworking delivery partner with 2 years experience in Nagercoil area."',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // ── Skills ───────────────────────────────────────
+          const Text('Skills',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.ink)),
+          const SizedBox(height: 4),
+          const Text('Separate with commas',
+              style: TextStyle(fontSize: 11.5, color: AppColors.mute)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _skillsCtrl,
+            decoration: InputDecoration(
+              hintText: 'e.g. Driving, Cooking, MS Excel, Customer Service',
+              prefixIcon: const Icon(Icons.bolt_outlined),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // ── Experience ───────────────────────────────────
+          const Text('Work Experience',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.ink)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _experienceCtrl,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText:
+                  'Describe your past experience…\ne.g. "2 years delivery at Swiggy (2022-2024), 1 year retail at local store."',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // ── Save ─────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('Save CV',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+          ),
+
+          // ── Skills preview ────────────────────────────────
+          if (user != null && user.skills.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const Text('Your Skills',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.ink)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: user.skills
+                  .split(',')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty)
+                  .map((s) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealLight,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.teal),
+                        ),
+                        child: Text(s,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.teal,
+                                fontWeight: FontWeight.w600)),
+                      ))
+                  .toList(),
+            ),
+          ],
+        ],
       ),
     );
   }

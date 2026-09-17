@@ -51,6 +51,121 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
     }
   }
 
+  Future<void> _showReportDialog(BuildContext ctx) async {
+    final reasons = [
+      'Fake job posting',
+      'Requests money / fees',
+      'Suspicious contact method',
+      'Misleading salary info',
+      'Company doesn\'t exist',
+      'Other',
+    ];
+    String? selected = reasons.first;
+    final ctrl = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: ctx,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setS) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.flag, color: AppColors.coral, size: 20),
+              SizedBox(width: 8),
+              Text('Report This Job'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Why are you reporting this job?',
+                  style: TextStyle(fontSize: 13, color: AppColors.mute)),
+              const SizedBox(height: 12),
+              ...reasons.map((r) => InkWell(
+                    onTap: () => setS(() => selected = r),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selected == r
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 20,
+                            color: selected == r
+                                ? AppColors.teal
+                                : AppColors.mute,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(r,
+                                style: const TextStyle(fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 8),
+              TextField(
+                controller: ctrl,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Additional details (optional)',
+                  filled: true,
+                  fillColor: AppColors.paper,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.all(10),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.coral),
+              child: const Text('Submit Report'),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+
+    if (confirmed != true || !mounted) return;
+
+    final job = ref.read(selectedJobProvider);
+    final uid = ref.read(currentFirebaseUserProvider)?.uid;
+    if (job == null || uid == null) return;
+
+    try {
+      await ref.read(firestoreServiceProvider).reportJob(
+        jobId:    job.id,
+        jobTitle: job.title,
+        reporterId: uid,
+        reason:   selected ?? reasons.first,
+        details:  ctrl.text.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Report submitted. Our team will review within 24 hours. Thank you!'),
+        backgroundColor: AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    }
+  }
+
   Future<void> _apply() async {
     final job = ref.read(selectedJobProvider);
     final firebaseUser = ref.read(currentFirebaseUserProvider);
@@ -147,7 +262,14 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Job Details'),
-        actions: const [Icon(Icons.flag_outlined), SizedBox(width: 16)],
+        actions: [
+          IconButton(
+            tooltip: 'Report this job',
+            icon: const Icon(Icons.flag_outlined),
+            onPressed: () => _showReportDialog(context),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),

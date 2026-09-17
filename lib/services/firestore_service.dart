@@ -1153,4 +1153,142 @@ class FirestoreService {
     if (snap.docs.isEmpty) return null;
     return snap.docs.first.id;
   }
+
+  // ============================================================
+  // REPORT JOB
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> get reports =>
+      _firestore.collection('reports');
+
+  Future<void> reportJob({
+    required String jobId,
+    required String jobTitle,
+    required String reporterId,
+    required String reason,
+    required String details,
+  }) async {
+    await reports.add({
+      'jobId':      jobId,
+      'jobTitle':   jobTitle,
+      'reporterId': reporterId,
+      'reason':     reason,
+      'details':    details,
+      'status':     'pending',
+      'createdAt':  FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getJobReports() {
+    return reports
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((s) => s.docs.map((d) {
+              final m = Map<String, dynamic>.from(d.data());
+              m['id'] = d.id;
+              return m;
+            }).toList());
+  }
+
+  Future<void> dismissReport(String reportId) async {
+    await reports.doc(reportId).update({'status': 'dismissed'});
+  }
+
+  // ============================================================
+  // CV / SKILLS
+  // ============================================================
+
+  Future<void> updateCv({
+    required String uid,
+    required String bio,
+    required String skills,
+    required String experience,
+  }) async {
+    await users.doc(uid).update({
+      'bio':        bio,
+      'skills':     skills,
+      'experience': experience,
+    });
+  }
+
+  // ============================================================
+  // JOB BOOKMARKS
+  // ============================================================
+
+  CollectionReference<Map<String, dynamic>> _bookmarks(String uid) =>
+      users.doc(uid).collection('bookmarks');
+
+  Future<void> bookmarkJob(String uid, JobModel job) async {
+    await _bookmarks(uid).doc(job.id).set(job.toMap());
+  }
+
+  Future<void> removeBookmark(String uid, String jobId) async {
+    await _bookmarks(uid).doc(jobId).delete();
+  }
+
+  Stream<List<String>> watchBookmarkedJobIds(String uid) {
+    return _bookmarks(uid).snapshots().map(
+        (s) => s.docs.map((d) => d.id).toList());
+  }
+
+  Stream<List<JobModel>> watchBookmarkedJobs(String uid) {
+    return _bookmarks(uid).snapshots().map((s) => s.docs
+        .map((d) => JobModel.fromMap(d.data(), d.id))
+        .toList());
+  }
+
+  // ============================================================
+  // ADMIN ANALYTICS
+  // ============================================================
+
+  Future<Map<String, int>> getAnalytics() async {
+    final results = await Future.wait([
+      users.get(),
+      users.where('role', isEqualTo: 'job_seeker').get(),
+      users.where('role', isEqualTo: 'employer').get(),
+      jobs.get(),
+      jobs.where('status', isEqualTo: 'approved').get(),
+      jobs.where('status', isEqualTo: 'rejected').get(),
+      applications.get(),
+      applications.where('status', isEqualTo: ApplicationStatus.completed).get(),
+      notifications.get(),
+      reports.where('status', isEqualTo: 'pending').get(),
+    ]);
+    return {
+      'totalUsers':       results[0].size,
+      'totalSeekers':     results[1].size,
+      'totalEmployers':   results[2].size,
+      'totalJobs':        results[3].size,
+      'approvedJobs':     results[4].size,
+      'rejectedJobs':     results[5].size,
+      'totalApplications':results[6].size,
+      'completedJobs':    results[7].size,
+      'totalNotifications':results[8].size,
+      'pendingReports':   results[9].size,
+    };
+  }
+
+  // ============================================================
+  // MANUAL ESCROW (no Razorpay)
+  // ============================================================
+
+  /// Mark escrow as manually funded (no Razorpay payment).
+  Future<void> markEscrowManual({
+    required String jobId,
+    required String applicationId,
+    required String employerId,
+    required int    amount,
+  }) async {
+    await escrows.add({
+      'jobId':         jobId,
+      'applicationId': applicationId,
+      'employerId':    employerId,
+      'amount':        amount,
+      'paymentId':     'MANUAL',
+      'status':        'funded',
+      'createdAt':     FieldValue.serverTimestamp(),
+      'updatedAt':     FieldValue.serverTimestamp(),
+    });
+    await jobs.doc(jobId).update({'escrowFunded': true});
+  }
 }

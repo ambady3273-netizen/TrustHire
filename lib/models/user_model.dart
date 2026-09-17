@@ -42,6 +42,14 @@ class UserModel {
   /// UID of the user who referred this account (empty if organic).
   final String referredBy;
 
+  // ── CV / Skills ─────────────────────────────────────────────
+  /// Short bio shown to employers on the applicant card.
+  final String bio;
+  /// Comma-separated skills list e.g. "Driving, Cooking, Excel"
+  final String skills;
+  /// Work experience summary e.g. "2 years delivery, 1 year retail"
+  final String experience;
+
   UserModel({
     required this.uid,
     required this.fullName,
@@ -64,6 +72,9 @@ class UserModel {
     this.suspendedBy      = '',
     this.referralCode     = '',
     this.referredBy       = '',
+    this.bio              = '',
+    this.skills           = '',
+    this.experience       = '',
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -89,6 +100,9 @@ class UserModel {
       suspendedBy:     map['suspendedBy']     ?? '',
       referralCode:    map['referralCode']    ?? '',
       referredBy:      map['referredBy']      ?? '',
+      bio:             map['bio']             ?? '',
+      skills:          map['skills']          ?? '',
+      experience:      map['experience']      ?? '',
     );
   }
 
@@ -115,6 +129,9 @@ class UserModel {
       'suspendedBy':     suspendedBy,
       'referralCode':    referralCode,
       'referredBy':      referredBy,
+      'bio':             bio,
+      'skills':          skills,
+      'experience':      experience,
     };
   }
 
@@ -140,6 +157,9 @@ class UserModel {
     String?    suspendedBy,
     String?    referralCode,
     String?    referredBy,
+    String?    bio,
+    String?    skills,
+    String?    experience,
   }) {
     return UserModel(
       uid:             uid             ?? this.uid,
@@ -163,6 +183,9 @@ class UserModel {
       suspendedBy:     suspendedBy     ?? this.suspendedBy,
       referralCode:    referralCode    ?? this.referralCode,
       referredBy:      referredBy      ?? this.referredBy,
+      bio:             bio             ?? this.bio,
+      skills:          skills          ?? this.skills,
+      experience:      experience      ?? this.experience,
     );
   }
 }

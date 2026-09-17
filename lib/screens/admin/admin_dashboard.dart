@@ -158,6 +158,14 @@ class AdminDashboard extends ConsumerWidget {
             ),
             onTap: () => Navigator.pushNamed(context, '/adminVerification'),
           ),
+          const SizedBox(height: 14),
+          _QuickAction(
+            icon: Icons.bar_chart_rounded,
+            color: AppColors.ink,
+            label: 'Platform Analytics',
+            subtitle: 'Users, jobs, scam rate, completion stats',
+            onTap: () => Navigator.pushNamed(context, '/adminAnalytics'),
+          ),
         ],
       ),
     );

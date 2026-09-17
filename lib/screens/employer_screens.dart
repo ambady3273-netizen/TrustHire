@@ -80,8 +80,60 @@ class _EscrowScreenState extends ConsumerState<EscrowScreen> {
     super.dispose();
   }
 
-  void _onSuccess(PaymentSuccessResponse response) async {
+  Future<void> _markManualEscrow() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Mark as Manually Paid?'),
+        content: const Text(
+            'This records that you have paid the worker directly '
+            '(cash/UPI). Only do this if payment was already made.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.marigoldDark),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _processing = true);
+    try {
+      final j   = ref.read(selectedEmployerJobProvider);
+      final a   = ref.read(selectedApplicationForEscrowProvider);
+      final uid = ref.read(currentFirebaseUserProvider)?.uid ?? '';
+      if (j != null) {
+        await ref.read(firestoreServiceProvider).markEscrowManual(
+              jobId:         j.id,
+              applicationId: a?.id ?? '',
+              employerId:    uid,
+              amount:        j.salary.toInt(),
+            );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Marked as manually paid. Escrow recorded.'),
+        backgroundColor: AppColors.teal,
+      ));
+      Navigator.pushNamed(context, AppRoutes.confirmRelease);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _processing = false);
+    }
+  }
+
+  void _onSuccess(PaymentSuccessResponse response) async {    setState(() => _processing = true);
     try {
       final job = ref.read(selectedEmployerJobProvider);
       final app = ref.read(selectedApplicationForEscrowProvider);
@@ -200,6 +252,55 @@ class _EscrowScreenState extends ConsumerState<EscrowScreen> {
                   '2. Worker sees the job as escrow-funded and begins work\n'
                   '3. Funds released to them only after you confirm completion',
                   style: TextStyle(fontSize: 11.5, height: 1.6),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Manual payment option ─────────────────────────
+          AppCard(
+            bg: AppColors.warnBg,
+            borderColor: Colors.transparent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        color: AppColors.marigoldDark, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'No Razorpay key yet?',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.marigoldDark),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'You can mark the escrow as manually paid '
+                  '(cash/UPI outside the app). The worker will '
+                  'see the job as escrow-funded.',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.marigoldDark),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _processing
+                        ? null
+                        : () => _markManualEscrow(),
+                    icon: const Icon(Icons.handshake_outlined, size: 16),
+                    label: const Text('Mark as Manually Paid'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.marigoldDark,
+                      side: const BorderSide(color: AppColors.marigoldDark),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
                 ),
               ],
             ),
