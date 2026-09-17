@@ -49,6 +49,10 @@ class UserModel {
   final String skills;
   /// Work experience summary e.g. "2 years delivery, 1 year retail"
   final String experience;
+  /// URL of uploaded CV/resume file (PDF or image) in Firebase Storage.
+  final String cvFileUrl;
+  /// Original filename of the uploaded CV.
+  final String cvFileName;
 
   UserModel({
     required this.uid,
@@ -75,6 +79,8 @@ class UserModel {
     this.bio              = '',
     this.skills           = '',
     this.experience       = '',
+    this.cvFileUrl        = '',
+    this.cvFileName       = '',
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -103,6 +109,8 @@ class UserModel {
       bio:             map['bio']             ?? '',
       skills:          map['skills']          ?? '',
       experience:      map['experience']      ?? '',
+      cvFileUrl:       map['cvFileUrl']       ?? '',
+      cvFileName:      map['cvFileName']      ?? '',
     );
   }
 
@@ -132,6 +140,8 @@ class UserModel {
       'bio':             bio,
       'skills':          skills,
       'experience':      experience,
+      'cvFileUrl':       cvFileUrl,
+      'cvFileName':      cvFileName,
     };
   }
 
@@ -160,6 +170,8 @@ class UserModel {
     String?    bio,
     String?    skills,
     String?    experience,
+    String?    cvFileUrl,
+    String?    cvFileName,
   }) {
     return UserModel(
       uid:             uid             ?? this.uid,
@@ -186,6 +198,8 @@ class UserModel {
       bio:             bio             ?? this.bio,
       skills:          skills          ?? this.skills,
       experience:      experience      ?? this.experience,
+      cvFileUrl:       cvFileUrl       ?? this.cvFileUrl,
+      cvFileName:      cvFileName      ?? this.cvFileName,
     );
   }
 }

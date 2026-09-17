@@ -1,5 +1,6 @@
-import 'dart:io';
+﻿import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,10 @@ import '../../providers/auth_provider.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Profile Edit + KYC Submission Screen
 // Accessible from all 3 roles via the person icon in the AppBar.
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -68,9 +69,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TAB 1 — Profile Edit
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 1 â€” Profile Edit
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _ProfileTab extends ConsumerStatefulWidget {
   final UserModel? user;
@@ -155,7 +156,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
           children: [
             const SizedBox(height: 8),
 
-            // ── Avatar ─────────────────────────────────────
+            // â”€â”€ Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             GestureDetector(
               onTap: _saving ? null : _pickAvatar,
               child: Stack(
@@ -204,7 +205,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                 style: TextStyle(fontSize: 11.5, color: AppColors.mute)),
             const SizedBox(height: 28),
 
-            // ── Name ───────────────────────────────────────
+            // â”€â”€ Name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TextFormField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.words,
@@ -224,7 +225,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
             ),
             const SizedBox(height: 14),
 
-            // ── Read-only info ─────────────────────────────
+            // â”€â”€ Read-only info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (user != null) ...[
               _InfoRow(
                   icon: Icons.email_outlined,
@@ -250,7 +251,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                       ? Icons.verified_user
                       : Icons.pending_outlined,
                   label: 'Account',
-                  value: user.verified ? 'Verified ✓' : 'Not Verified',
+                  value: user.verified ? 'Verified âœ“' : 'Not Verified',
                   valueColor:
                       user.verified ? AppColors.teal : AppColors.marigoldDark),
               const SizedBox(height: 8),
@@ -259,7 +260,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
 
             const SizedBox(height: 32),
 
-            // ── Save button ────────────────────────────────
+            // â”€â”€ Save button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -285,7 +286,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
 
             const SizedBox(height: 20),
 
-            // ── Quick links ────────────────────────────────
+            // â”€â”€ Quick links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _ProfileLink(
               icon:  Icons.work_history_outlined,
               label: 'Work History',
@@ -302,7 +303,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
             const SizedBox(height: 10),
             _ProfileLink(
               icon:  Icons.translate,
-              label: 'Language / மொழி / भाषा',
+              label: 'Language / à®®à¯Šà®´à®¿ / à¤­à¤¾à¤·à¤¾',
               color: AppColors.ink,
               onTap: () => Navigator.pushNamed(context, '/language'),
             ),
@@ -356,9 +357,9 @@ class _ProfileLink extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TAB 2 — KYC Submission
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 2 â€” KYC Submission
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _KycTab extends ConsumerStatefulWidget {
   final UserModel? user;
@@ -435,11 +436,11 @@ class _KycTabState extends ConsumerState<_KycTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Status banner ──────────────────────────────────
+          // â”€â”€ Status banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _KycBanner(kycStatus: kycStatus, rejectReason: user?.kycRejectReason ?? ''),
           const SizedBox(height: 24),
 
-          // ── Already verified ───────────────────────────────
+          // â”€â”€ Already verified â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (kycStatus == KycStatus.verified) ...[
             Center(
               child: Column(
@@ -448,7 +449,7 @@ class _KycTabState extends ConsumerState<_KycTab> {
                   Icon(Icons.verified_user, size: 72, color: AppColors.teal),
                   SizedBox(height: 12),
                   Text(
-                    'Your identity is verified ✓',
+                    'Your identity is verified âœ“',
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -464,7 +465,7 @@ class _KycTabState extends ConsumerState<_KycTab> {
               ),
             ),
           ] else ...[
-            // ── Instructions ─────────────────────────────────
+            // â”€â”€ Instructions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const Text('Identity Verification',
                 style: TextStyle(
                     fontSize: 16,
@@ -478,28 +479,28 @@ class _KycTabState extends ConsumerState<_KycTab> {
             ),
             const SizedBox(height: 24),
 
-            // ── Government ID ─────────────────────────────────
+            // â”€â”€ Government ID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const Text('Government ID',
                 style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.ink)),
             const SizedBox(height: 8),
             _UploadTile(
               icon: Icons.badge_outlined,
-              title: _idFile != null ? '✓ ID selected' : 'Upload Aadhaar / PAN',
-              subtitle: 'JPG or PNG · max 5 MB',
+              title: _idFile != null ? 'âœ“ ID selected' : 'Upload Aadhaar / PAN',
+              subtitle: 'JPG or PNG Â· max 5 MB',
               picked: _idFile != null,
               disabled: _uploading,
               onTap: _pickId,
             ),
             const SizedBox(height: 16),
 
-            // ── Selfie ────────────────────────────────────────
+            // â”€â”€ Selfie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const Text('Live Selfie',
                 style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.ink)),
             const SizedBox(height: 8),
             _UploadTile(
               icon: Icons.face_retouching_natural,
-              title: _selfieFile != null ? '✓ Selfie captured' : 'Take a live selfie',
-              subtitle: 'Camera · matched against your ID',
+              title: _selfieFile != null ? 'âœ“ Selfie captured' : 'Take a live selfie',
+              subtitle: 'Camera Â· matched against your ID',
               picked: _selfieFile != null,
               disabled: _uploading,
               onTap: _pickSelfie,
@@ -548,7 +549,7 @@ class _KycTabState extends ConsumerState<_KycTab> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.upload_rounded),
-                label: Text(_uploading ? 'Uploading…' : 'Submit for Verification'),
+                label: Text(_uploading ? 'Uploadingâ€¦' : 'Submit for Verification'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.ink,
                   foregroundColor: Colors.white,
@@ -564,9 +565,9 @@ class _KycTabState extends ConsumerState<_KycTab> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Shared helper widgets
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
@@ -619,7 +620,7 @@ class _KycStatusRow extends StatelessWidget {
     switch (kycStatus) {
       case KycStatus.verified:
         color = AppColors.teal;
-        label = 'KYC Verified ✓';
+        label = 'KYC Verified âœ“';
         icon  = Icons.verified_user;
         break;
       case KycStatus.submitted:
@@ -802,9 +803,9 @@ class _UploadTile extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TAB 3 — CV / Skills
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 3 â€” CV / Skills  (Professional redesign with file upload)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _CvTab extends ConsumerStatefulWidget {
   final UserModel? user;
@@ -818,8 +819,10 @@ class _CvTabState extends ConsumerState<_CvTab> {
   final _bioCtrl        = TextEditingController();
   final _skillsCtrl     = TextEditingController();
   final _experienceCtrl = TextEditingController();
-  bool _saving      = false;
-  bool _initialized = false;
+  bool   _saving      = false;
+  bool   _initialized = false;
+  bool   _uploadingCv = false;
+  String? _pickedFileName;
 
   @override
   void dispose() {
@@ -837,6 +840,52 @@ class _CvTabState extends ConsumerState<_CvTab> {
     _initialized = true;
   }
 
+  Future<void> _pickAndUploadCv() async {
+    final result = await FilePicker.platform.pickFiles(
+      type:             FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.path == null) return;
+
+    setState(() { _uploadingCv = true; _pickedFileName = file.name; });
+    try {
+      final uid = ref.read(authServiceProvider).currentUser?.uid;
+      if (uid == null) throw Exception('Not logged in.');
+
+      final storageRef = FirebaseStorage.instance
+          .ref('cvs/$uid/${file.name}');
+      await storageRef.putFile(File(file.path!));
+      final url = await storageRef.getDownloadURL();
+
+      await ref.read(firestoreServiceProvider).updateCv(
+            uid:        uid,
+            bio:        _bioCtrl.text.trim(),
+            skills:     _skillsCtrl.text.trim(),
+            experience: _experienceCtrl.text.trim(),
+            cvFileUrl:  url,
+            cvFileName: file.name,
+          );
+
+      ref.invalidate(userProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('CV uploaded successfully!'),
+        backgroundColor: AppColors.teal,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Upload failed: $e'),
+        backgroundColor: AppColors.coral,
+      ));
+    } finally {
+      if (mounted) setState(() => _uploadingCv = false);
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
@@ -851,7 +900,7 @@ class _CvTabState extends ConsumerState<_CvTab> {
       ref.invalidate(userProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('CV updated!'),
+        content: Text('CV saved!'),
         backgroundColor: AppColors.teal,
       ));
     } catch (e) {
@@ -870,154 +919,499 @@ class _CvTabState extends ConsumerState<_CvTab> {
     final user = widget.user;
     if (user != null) _init(user);
 
+    final hasSkills = user != null && user.skills.isNotEmpty;
+    final hasCvFile = user != null && user.cvFileUrl.isNotEmpty;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────
-          AppCard(
-            bg: AppColors.tealLight,
-            borderColor: Colors.transparent,
-            child: const Row(
+
+          // â”€â”€ Completeness bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          if (user != null) _CvCompletionBar(user: user),
+          const SizedBox(height: 20),
+
+          // â•â•â• SECTION 1: About Me â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          _SectionCard(
+            icon: Icons.person_outline,
+            title: 'About Me',
+            subtitle: 'Tell employers who you are',
+            child: TextField(
+              controller: _bioCtrl,
+              maxLines: 4,
+              maxLength: 300,
+              decoration: InputDecoration(
+                hintText: 'e.g. "Hardworking and reliable delivery partner '
+                    'with 2 years of experience in Nagercoil. '
+                    'Punctual, honest, and always on time."',
+                hintStyle: const TextStyle(
+                    fontSize: 12.5, color: AppColors.mute),
+                filled:    true,
+                fillColor: AppColors.paper,
+                border:    OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:   BorderSide.none),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:   BorderSide.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // â•â•â• SECTION 2: Skills â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          _SectionCard(
+            icon: Icons.bolt_outlined,
+            title: 'Skills',
+            subtitle: 'Separate multiple skills with commas',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.tips_and_updates_outlined,
-                    color: AppColors.teal, size: 20),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'A complete CV makes employers choose you faster. '
-                    'Add your skills and experience to stand out.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.teal),
+                TextField(
+                  controller: _skillsCtrl,
+                  decoration: InputDecoration(
+                    hintText:
+                        'e.g. Driving, Cooking, MS Excel, Customer Service',
+                    hintStyle: const TextStyle(
+                        fontSize: 12.5, color: AppColors.mute),
+                    prefixIcon: const Icon(Icons.label_outline, size: 18),
+                    filled:    true,
+                    fillColor: AppColors.paper,
+                    border:    OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:   BorderSide.none),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:   BorderSide.none),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                // Live skill chips preview
+                if (hasSkills || _skillsCtrl.text.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: (_skillsCtrl.text.isNotEmpty
+                            ? _skillsCtrl.text
+                            : user?.skills ?? '')
+                        .split(',')
+                        .map((s) => s.trim())
+                        .where((s) => s.isNotEmpty)
+                        .map((s) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.teal.withAlpha(20),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: AppColors.teal.withAlpha(80)),
+                              ),
+                              child: Text(s,
+                                  style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppColors.teal,
+                                      fontWeight: FontWeight.w600)),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // â•â•â• SECTION 3: Work Experience â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          _SectionCard(
+            icon: Icons.work_history_outlined,
+            title: 'Work Experience',
+            subtitle: 'List your past jobs and duration',
+            child: TextField(
+              controller: _experienceCtrl,
+              maxLines: 5,
+              maxLength: 500,
+              decoration: InputDecoration(
+                hintText: 'e.g.\nâ€¢ Swiggy Delivery â€” 2 years (2022â€“2024)\n'
+                    'â€¢ Retail Assistant at D-Mart â€” 1 year (2021â€“2022)\n'
+                    'â€¢ Freelance AC repair â€” 6 months',
+                hintStyle: const TextStyle(
+                    fontSize: 12, color: AppColors.mute),
+                filled:    true,
+                fillColor: AppColors.paper,
+                border:    OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:   BorderSide.none),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:   BorderSide.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // â•â•â• SECTION 4: CV File Upload â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:        Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border:       Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color:        AppColors.ink.withAlpha(12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.description_outlined,
+                          color: AppColors.ink, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Resume / CV File',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.ink)),
+                          Text('PDF, DOC, or image â€” max 5 MB',
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.mute)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Existing file indicator
+                if (hasCvFile) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.tealLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded,
+                            color: AppColors.teal, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            user.cvFileName.isNotEmpty
+                                ? user.cvFileName
+                                : 'CV uploaded',
+                            style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppColors.teal,
+                                fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Uploaded âœ“',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.teal)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                if (_pickedFileName != null && !_uploadingCv) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.tealLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.attach_file_rounded,
+                            color: AppColors.teal, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _pickedFileName!,
+                            style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppColors.teal,
+                                fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _uploadingCv ? null : _pickAndUploadCv,
+                    icon: _uploadingCv
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.ink))
+                        : const Icon(Icons.upload_file_rounded, size: 18),
+                    label: Text(
+                      _uploadingCv
+                          ? 'Uploadingâ€¦'
+                          : hasCvFile
+                              ? 'Replace CV File'
+                              : 'Upload CV / Resume',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.ink,
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
 
-          // ── Bio ──────────────────────────────────────────
-          const Text('About Me',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.ink)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _bioCtrl,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText:
-                  'Write a short intro about yourself…\ne.g. "Hardworking delivery partner with 2 years experience in Nagercoil area."',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
-          // ── Skills ───────────────────────────────────────
-          const Text('Skills',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.ink)),
-          const SizedBox(height: 4),
-          const Text('Separate with commas',
-              style: TextStyle(fontSize: 11.5, color: AppColors.mute)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _skillsCtrl,
-            decoration: InputDecoration(
-              hintText: 'e.g. Driving, Cooking, MS Excel, Customer Service',
-              prefixIcon: const Icon(Icons.bolt_outlined),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // ── Experience ───────────────────────────────────
-          const Text('Work Experience',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.ink)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _experienceCtrl,
-            maxLines: 4,
-            decoration: InputDecoration(
-              hintText:
-                  'Describe your past experience…\ne.g. "2 years delivery at Swiggy (2022-2024), 1 year retail at local store."',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // ── Save ─────────────────────────────────────────
+          // â”€â”€ Save button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SizedBox(
             width: double.infinity,
             height: 52,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
+            child: ElevatedButton.icon(
+              onPressed: (_saving || _uploadingCv) ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.save_outlined),
+              label: Text(
+                _saving ? 'Savingâ€¦' : 'Save CV',
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.ink,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: _saving
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text('Save CV',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700)),
             ),
           ),
-
-          // ── Skills preview ────────────────────────────────
-          if (user != null && user.skills.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const Text('Your Skills',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: AppColors.ink)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: user.skills
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .map((s) => Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.tealLight,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.teal),
-                        ),
-                        child: Text(s,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.teal,
-                                fontWeight: FontWeight.w600)),
-                      ))
-                  .toList(),
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'Employers see your CV when reviewing your application.',
+              style: TextStyle(fontSize: 11.5, color: AppColors.mute),
+              textAlign: TextAlign.center,
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// CV Completion progress bar
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _CvCompletionBar extends StatelessWidget {
+  final UserModel user;
+  const _CvCompletionBar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    int filled = 0;
+    if (user.bio.isNotEmpty)        filled++;
+    if (user.skills.isNotEmpty)     filled++;
+    if (user.experience.isNotEmpty) filled++;
+    if (user.cvFileUrl.isNotEmpty)  filled++;
+    const total = 4;
+    final pct = filled / total;
+
+    final color = pct >= 1.0
+        ? AppColors.teal
+        : pct >= 0.5
+            ? AppColors.marigoldDark
+            : AppColors.coral;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color:        color.withAlpha(15),
+        borderRadius: BorderRadius.circular(12),
+        border:       Border.all(color: color.withAlpha(60)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'CV Completeness',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: color),
+              ),
+              Text(
+                '$filled / $total sections',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value:           pct,
+              minHeight:       8,
+              backgroundColor: color.withAlpha(30),
+              valueColor:      AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              _Pill(label: 'Bio',        done: user.bio.isNotEmpty),
+              _Pill(label: 'Skills',     done: user.skills.isNotEmpty),
+              _Pill(label: 'Experience', done: user.experience.isNotEmpty),
+              _Pill(label: 'CV File',    done: user.cvFileUrl.isNotEmpty),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+  final bool   done;
+  const _Pill({required this.label, required this.done});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color:        done
+            ? AppColors.teal.withAlpha(20)
+            : Colors.grey.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: done
+              ? AppColors.teal.withAlpha(80)
+              : Colors.grey.withAlpha(50),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            done ? Icons.check_circle : Icons.circle_outlined,
+            size:  12,
+            color: done ? AppColors.teal : AppColors.mute,
+          ),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  fontSize:   10.5,
+                  color:      done ? AppColors.teal : AppColors.mute,
+                  fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Reusable section card for CV sections
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _SectionCard extends StatelessWidget {
+  final IconData icon;
+  final String   title;
+  final String   subtitle;
+  final Widget   child;
+
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:    const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border:       Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width:  36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color:        AppColors.teal.withAlpha(18),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: AppColors.teal, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.ink)),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.mute)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
         ],
       ),
     );

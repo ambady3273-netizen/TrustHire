@@ -32,22 +32,28 @@ final firestoreServiceProvider = Provider<FirestoreService>((ref) {
 // of a hard error screen.
 // ============================================================
 
+// ============================================================
+// USER MODEL PROVIDER
+// Watches the Firebase auth state + streams the Firestore doc
+// in real-time. Role/suspension changes reflect INSTANTLY
+// without any delay — no polling, no manual invalidate.
+// ============================================================
+
 final userProvider = StreamProvider<UserModel?>((ref) async* {
-  final authService = ref.watch(authServiceProvider);
+  final authService      = ref.watch(authServiceProvider);
   final firestoreService = ref.watch(firestoreServiceProvider);
 
-  // Re-emit every time the Firebase auth state changes.
   await for (final firebaseUser in authService.authStateChanges) {
     if (firebaseUser == null) {
       yield null;
     } else {
-      // Attempt to load the Firestore document.
-      // Return null (not an error) if the doc is missing or
-      // permissions are denied — AuthGate handles this case by
-      // showing the auto-create-profile screen.
+      // Switch to a real-time Firestore stream for this user.
+      // Any field change (role, suspended, kycStatus…) is pushed
+      // to the UI within milliseconds — no round-trip delay.
       try {
-        final userModel = await firestoreService.getUser(firebaseUser.uid);
-        yield userModel;
+        yield* firestoreService
+            .watchUser(firebaseUser.uid)
+            .handleError((_) => null);
       } catch (_) {
         yield null;
       }

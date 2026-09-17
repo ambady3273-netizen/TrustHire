@@ -159,12 +159,6 @@ class AdminAnalyticsScreen extends ConsumerWidget {
                     value: data['pendingReports'] ?? 0,
                     color: AppColors.coral,
                     icon: Icons.flag_outlined),
-                const SizedBox(width: 10),
-                _StatCard(
-                    label: 'Notifications',
-                    value: data['totalNotifications'] ?? 0,
-                    color: AppColors.ink,
-                    icon: Icons.notifications_outlined),
               ],
             ),
 

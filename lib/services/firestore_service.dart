@@ -56,6 +56,15 @@ class FirestoreService {
     );
   }
 
+  /// Watch User — real-time stream, updates immediately on any field change.
+  /// Used by userProvider so role/suspension changes reflect instantly.
+  Stream<UserModel?> watchUser(String uid) {
+    return users.doc(uid).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) return null;
+      return UserModel.fromMap(doc.data()!);
+    });
+  }
+
   /// Update User
   Future<void> updateUser(UserModel user) async {
     await users.doc(user.uid).update(
@@ -1203,11 +1212,15 @@ class FirestoreService {
     required String bio,
     required String skills,
     required String experience,
+    String cvFileUrl  = '',
+    String cvFileName = '',
   }) async {
     await users.doc(uid).update({
       'bio':        bio,
       'skills':     skills,
       'experience': experience,
+      if (cvFileUrl.isNotEmpty)  'cvFileUrl':  cvFileUrl,
+      if (cvFileName.isNotEmpty) 'cvFileName': cvFileName,
     });
   }
 
@@ -1242,6 +1255,8 @@ class FirestoreService {
   // ============================================================
 
   Future<Map<String, int>> getAnalytics() async {
+    // Only query collections that admins have list permission for.
+    // notifications has per-doc uid rules so list queries fail — skip it.
     final results = await Future.wait([
       users.get(),
       users.where('role', isEqualTo: 'job_seeker').get(),
@@ -1250,21 +1265,21 @@ class FirestoreService {
       jobs.where('status', isEqualTo: 'approved').get(),
       jobs.where('status', isEqualTo: 'rejected').get(),
       applications.get(),
-      applications.where('status', isEqualTo: ApplicationStatus.completed).get(),
-      notifications.get(),
+      applications
+          .where('status', isEqualTo: ApplicationStatus.completed)
+          .get(),
       reports.where('status', isEqualTo: 'pending').get(),
     ]);
     return {
-      'totalUsers':       results[0].size,
-      'totalSeekers':     results[1].size,
-      'totalEmployers':   results[2].size,
-      'totalJobs':        results[3].size,
-      'approvedJobs':     results[4].size,
-      'rejectedJobs':     results[5].size,
-      'totalApplications':results[6].size,
-      'completedJobs':    results[7].size,
-      'totalNotifications':results[8].size,
-      'pendingReports':   results[9].size,
+      'totalUsers':        results[0].size,
+      'totalSeekers':      results[1].size,
+      'totalEmployers':    results[2].size,
+      'totalJobs':         results[3].size,
+      'approvedJobs':      results[4].size,
+      'rejectedJobs':      results[5].size,
+      'totalApplications': results[6].size,
+      'completedJobs':     results[7].size,
+      'pendingReports':    results[8].size,
     };
   }
 
