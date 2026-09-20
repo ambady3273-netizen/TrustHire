@@ -58,16 +58,13 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Load saved locale BEFORE runApp so the first frame shows
-  // the correct language — this is the fix for language not applying.
+  // Load saved locale BEFORE runApp — first frame shows correct language.
   final savedLocale = await loadSavedLocale();
 
   runApp(
     ProviderScope(
       overrides: [
-        // Override the initial state with the saved locale.
-        localeProvider.overrideWith(
-            (ref) => LocaleNotifier(savedLocale)),
+        localeProvider.overrideWith((ref) => LocaleNotifier(savedLocale)),
       ],
       child: const TrustHireApp(),
     ),

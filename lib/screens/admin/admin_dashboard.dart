@@ -70,7 +70,7 @@ class AdminDashboard extends ConsumerWidget {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
                 Navigator.pushNamedAndRemoveUntil(
-                    context, '/login', (r) => false);
+                    context, '/authGate', (r) => false);
               }
             },
           ),

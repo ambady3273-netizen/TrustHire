@@ -64,7 +64,7 @@ class EmployerDashboard extends ConsumerWidget {
               if (context.mounted) {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
-                  '/login',
+                  '/authGate',
                   (route) => false,
                 );
               }

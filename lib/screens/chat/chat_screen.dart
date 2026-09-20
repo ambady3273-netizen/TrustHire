@@ -101,6 +101,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.paper,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         titleSpacing: 0,
         title: Row(
@@ -186,11 +187,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // ── input bar ─────────────────────────────────────
           Container(
             color: Colors.white,
-            padding: EdgeInsets.fromLTRB(
-                12,
-                8,
-                12,
-                8 + MediaQuery.of(context).viewInsets.bottom),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             child: SafeArea(
               top: false,
               child: Row(

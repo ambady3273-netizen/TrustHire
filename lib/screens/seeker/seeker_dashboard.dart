@@ -27,6 +27,7 @@ class SeekerDashboard extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.shield_outlined, size: 18),
             SizedBox(width: 6),
@@ -35,27 +36,43 @@ class SeekerDashboard extends ConsumerWidget {
         ),
         actions: [
           _NotifBell(),
-          IconButton(
-            tooltip: 'Saved Jobs',
-            icon: const Icon(Icons.bookmark_outline),
-            onPressed: () =>
-                Navigator.pushNamed(context, '/savedJobs'),
-          ),
-          IconButton(
-            tooltip: 'My Profile',
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => Navigator.pushNamed(context, '/editProfile'),
-          ),
-          IconButton(
-            tooltip: 'Messages',
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () => Navigator.pushNamed(context, '/chats'),
-          ),
-          IconButton(
-            tooltip: 'My Applications',
-            icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () =>
-                Navigator.pushNamed(context, '/myApplications'),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (route) => Navigator.pushNamed(context, route),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: '/savedJobs',
+                child: Row(children: [
+                  Icon(Icons.bookmark_outline, size: 18),
+                  SizedBox(width: 10),
+                  Text('Saved Jobs'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: '/editProfile',
+                child: Row(children: [
+                  Icon(Icons.person_outline, size: 18),
+                  SizedBox(width: 10),
+                  Text('My Profile'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: '/chats',
+                child: Row(children: [
+                  Icon(Icons.chat_bubble_outline, size: 18),
+                  SizedBox(width: 10),
+                  Text('Messages'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: '/myApplications',
+                child: Row(children: [
+                  Icon(Icons.receipt_long_outlined, size: 18),
+                  SizedBox(width: 10),
+                  Text('My Applications'),
+                ]),
+              ),
+            ],
           ),
           IconButton(
             tooltip: 'Logout',
@@ -64,7 +81,7 @@ class SeekerDashboard extends ConsumerWidget {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
                 Navigator.pushNamedAndRemoveUntil(
-                  context, '/login', (route) => false,
+                  context, '/authGate', (route) => false,
                 );
               }
             },

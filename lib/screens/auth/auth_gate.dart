@@ -265,21 +265,38 @@ class _RoleRouterState extends State<_RoleRouter> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final route = _routeForRole(widget.role);
-      if (route != null) Navigator.pushReplacementNamed(context, route);
+      _navigate(widget.role);
     });
+  }
+
+  // ── KEY FIX: re-navigate when role changes ─────────────────
+  // This fires when userProvider emits a new role after login/logout.
+  @override
+  void didUpdateWidget(_RoleRouter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.role != widget.role) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _navigate(widget.role);
+      });
+    }
+  }
+
+  void _navigate(String role) {
+    final route = _routeForRole(role);
+    if (route != null) {
+      // Remove all previous routes so back button can't go to old dashboard.
+      Navigator.pushNamedAndRemoveUntil(
+          context, route, (r) => false);
+    }
   }
 
   String? _routeForRole(String role) {
     switch (role) {
-      case 'job_seeker':
-        return '/seekerDashboard';
-      case 'employer':
-        return '/employerDashboard';
-      case 'admin':
-        return '/adminDashboard';
-      default:
-        return null;
+      case 'job_seeker': return '/seekerDashboard';
+      case 'employer':   return '/employerDashboard';
+      case 'admin':      return '/adminDashboard';
+      default:           return null;
     }
   }
 
