@@ -46,6 +46,8 @@ import 'screens/onboarding_screens.dart';
 import 'screens/notifications_screen.dart';
 
 import 'providers/locale_provider.dart';
+import 'providers/auth_provider.dart';
+import 'models/user_model.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Global navigator key — used by FcmService to navigate from
@@ -84,6 +86,22 @@ class _TrustHireAppState extends ConsumerState<TrustHireApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FcmService.instance.init(ref: ref, navigatorKey: navigatorKey);
       LocalNotificationService.instance.init();
+    });
+
+    // ── Listen to auth state — pop entire stack on logout ────
+    // When user logs out, userProvider emits null.
+    // We pop everything back to /authGate so LoginScreen shows instantly.
+    ref.listenManual<AsyncValue<UserModel?>>(userProvider,
+        (AsyncValue<UserModel?>? previous, AsyncValue<UserModel?> next) {
+      final wasSignedIn = previous?.valueOrNull != null;
+      final isSignedOut =
+          next.valueOrNull == null && !(next.isLoading);
+
+      if (wasSignedIn && isSignedOut) {
+        // Pop ALL routes back to root — AuthGate is the root widget.
+        navigatorKey.currentState
+            ?.popUntil((route) => route.isFirst);
+      }
     });
   }
 
