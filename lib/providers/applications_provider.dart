@@ -3,7 +3,6 @@
 import '../models/application_model.dart';
 import '../models/user_model.dart';
 import '../services/firestore_service.dart';
-import 'auth_provider.dart';
 import 'job_provider.dart';
 
 // ── seeker: all my applications ───────────────────────────────

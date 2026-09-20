@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/application_model.dart';
 import '../models/job_model.dart';
 import '../models/notification_model.dart';
-import '../models/review_model.dart';
 import '../models/user_model.dart';
 
 class FirestoreService {
@@ -29,9 +28,6 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> get notifications =>
       _firestore.collection('notifications');
-
-  CollectionReference<Map<String, dynamic>> get reviews =>
-      _firestore.collection('reviews');
 
   // ============================================================
   // USER FUNCTIONS
@@ -100,10 +96,8 @@ class FirestoreService {
   }
 
   Stream<List<JobModel>> getJobs() {
-    return jobs
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
+    return jobs.orderBy('createdAt', descending: true).snapshots().map(
+        (s) => s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
   }
 
   Stream<List<JobModel>> getEmployerJobs(String employerId) {
@@ -111,7 +105,8 @@ class FirestoreService {
         .where('employerId', isEqualTo: employerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
+        .map((s) =>
+            s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
   }
 
   Stream<List<JobModel>> getApprovedJobs() {
@@ -119,7 +114,8 @@ class FirestoreService {
         .where('status', isEqualTo: 'approved')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
+        .map((s) =>
+            s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
   }
 
   /// Stream jobs pending admin review.
@@ -128,7 +124,8 @@ class FirestoreService {
         .where('status', isEqualTo: 'pending_review')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
+        .map((s) =>
+            s.docs.map((d) => JobModel.fromMap(d.data(), d.id)).toList());
   }
 
   Future<void> updateJob(String jobId, Map<String, dynamic> data) async {
@@ -189,8 +186,9 @@ class FirestoreService {
         .where('jobId', isEqualTo: jobId)
         .orderBy('appliedAt', descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
+        .map((s) => s.docs
+            .map((d) => ApplicationModel.fromMap(d.data(), d.id))
+            .toList());
   }
 
   /// Stream all applications submitted by a seeker.
@@ -199,8 +197,9 @@ class FirestoreService {
         .where('seekerId', isEqualTo: seekerId)
         .orderBy('appliedAt', descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
+        .map((s) => s.docs
+            .map((d) => ApplicationModel.fromMap(d.data(), d.id))
+            .toList());
   }
 
   /// Stream all applications across all jobs posted by an employer.
@@ -209,8 +208,9 @@ class FirestoreService {
         .where('employerId', isEqualTo: employerId)
         .orderBy('appliedAt', descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map((d) => ApplicationModel.fromMap(d.data(), d.id)).toList());
+        .map((s) => s.docs
+            .map((d) => ApplicationModel.fromMap(d.data(), d.id))
+            .toList());
   }
 
   /// Update an application's status and stamp updatedAt.
@@ -258,8 +258,9 @@ class FirestoreService {
         .where('userId', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map((d) => NotificationModel.fromMap(d.data(), d.id)).toList());
+        .map((s) => s.docs
+            .map((d) => NotificationModel.fromMap(d.data(), d.id))
+            .toList());
   }
 
   /// Stream only the unread count — cheap to watch from the app bar.
@@ -304,44 +305,6 @@ class FirestoreService {
       batch.delete(doc.reference);
     }
     await batch.commit();
-  }
-
-  // ============================================================
-  // REVIEW FUNCTIONS
-  // ============================================================
-
-  /// Save a review and recalculate the reviewed user's TrustScore.
-  ///
-  /// Formula: base 20 (verified) + up to 60 pts from avg rating
-  ///          + up to 20 pts from job count (capped at 20 jobs).
-  Future<void> submitReview(ReviewModel review) async {
-    await reviews.add(review.toMap());
-
-    final snap = await reviews
-        .where('reviewedUserId', isEqualTo: review.reviewedUserId)
-        .get();
-    if (snap.docs.isEmpty) return;
-
-    double total = 0;
-    for (final doc in snap.docs) {
-      total += (doc.data()['rating'] ?? 0).toDouble();
-    }
-    final avg = total / snap.docs.length;
-    final jobCount = snap.docs.length;
-    final ratingPts = (avg / 5.0) * 60;
-    final jobPts = jobCount > 20 ? 20.0 : jobCount.toDouble();
-    final score = (20 + ratingPts + jobPts).clamp(0.0, 100.0);
-
-    await updateTrustScore(review.reviewedUserId, score);
-  }
-
-  Stream<List<ReviewModel>> getUserReviews(String userId) {
-    return reviews
-        .where('reviewedUserId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) =>
-            s.docs.map((d) => ReviewModel.fromMap(d.data(), d.id)).toList());
   }
 
   // ============================================================

@@ -110,6 +110,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
       final uid = credential.user!.uid;
 
+      // Derive a short unique referral code from the UID (first 8 chars, uppercased).
+      // Saved to Firestore so applyReferralBonus lookups work correctly.
+      final referralCode = uid.substring(0, 8).toUpperCase();
+
       final user = UserModel(
         uid: uid,
         fullName: fullName,
@@ -118,6 +122,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         verified: false,
         trustScore: 0,
         profileImage: '',
+        referralCode: referralCode,
         createdAt: Timestamp.now(),
         lastLogin: Timestamp.now(),
       );

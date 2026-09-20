@@ -1,13 +1,11 @@
 ﻿import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../models/application_model.dart';
 import '../models/job_model.dart';
-import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/job_provider.dart';
 import '../providers/notifications_provider.dart';
@@ -26,7 +24,8 @@ class JobFeedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadCount =
-        ref.watch(unreadNotificationCountProvider).whenOrNull(data: (n) => n) ?? 0;
+        ref.watch(unreadNotificationCountProvider).whenOrNull(data: (n) => n) ??
+            0;
     final jobsAsync = ref.watch(approvedJobsProvider);
     final trustScore = ref.watch(userProvider).maybeWhen(
           data: (u) => u?.trustScore.toInt() ?? 0,
@@ -48,8 +47,7 @@ class JobFeedScreen extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_none_rounded),
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/notifications'),
+                onPressed: () => Navigator.pushNamed(context, '/notifications'),
               ),
               if (unreadCount > 0)
                 Positioned(
@@ -62,8 +60,8 @@ class JobFeedScreen extends ConsumerWidget {
                         color: AppColors.coral,
                         shape: BoxShape.circle,
                       ),
-                      constraints: const BoxConstraints(
-                          minWidth: 16, minHeight: 16),
+                      constraints:
+                          const BoxConstraints(minWidth: 16, minHeight: 16),
                       child: Text(
                         unreadCount > 99 ? '99+' : '$unreadCount',
                         style: const TextStyle(
@@ -159,8 +157,8 @@ class _JobCard extends ConsumerWidget {
                   type: isSafe ? BadgeType.verified : BadgeType.warn,
                 ),
                 Text(job.category,
-                    style: const TextStyle(
-                        fontSize: 10.5, color: AppColors.mute)),
+                    style:
+                        const TextStyle(fontSize: 10.5, color: AppColors.mute)),
               ],
             ),
             const SizedBox(height: 8),
@@ -169,13 +167,13 @@ class _JobCard extends ConsumerWidget {
                     fontWeight: FontWeight.w700, fontSize: 13.5)),
             const SizedBox(height: 2),
             Text('${job.companyName} Â· ${job.location}',
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.mute)),
+                style: const TextStyle(fontSize: 11.5, color: AppColors.mute)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('â‚¹${NumberFormat('#,##0', 'en_IN').format(job.salary.toInt())} / mo',
+                Text(
+                    'â‚¹${NumberFormat('#,##0', 'en_IN').format(job.salary.toInt())} / mo',
                     style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13.5,
@@ -189,8 +187,7 @@ class _JobCard extends ConsumerWidget {
                         size: 28),
                     const SizedBox(width: 5),
                     const Text('Safety',
-                        style: TextStyle(
-                            fontSize: 10, color: AppColors.mute)),
+                        style: TextStyle(fontSize: 10, color: AppColors.mute)),
                   ],
                 ),
               ],
@@ -252,8 +249,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: const Text('Application Sent!'),
-          content: Text(
-              'You have applied for "${job.title}". '
+          content: Text('You have applied for "${job.title}". '
               'The employer will review your profile.'),
           actions: [
             FilledButton(
@@ -302,8 +298,8 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
           ),
           const SizedBox(height: 10),
           Text(job.title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700)),
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
           Text('${job.companyName} Â· ${job.location}',
               style: const TextStyle(fontSize: 12, color: AppColors.mute)),
@@ -319,8 +315,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                     children: [
                       Text(job.companyName,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5)),
+                              fontWeight: FontWeight.w700, fontSize: 12.5)),
                       const SizedBox(height: 2),
                       Text('Category: ${job.category}',
                           style: const TextStyle(
@@ -376,8 +371,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                           Expanded(
                               child: Text(r,
                                   style: const TextStyle(
-                                      fontSize: 11.5,
-                                      color: AppColors.mute))),
+                                      fontSize: 11.5, color: AppColors.mute))),
                         ],
                       ),
                     ),
@@ -406,8 +400,7 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k,
-              style: const TextStyle(fontSize: 12, color: AppColors.mute)),
+          Text(k, style: const TextStyle(fontSize: 12, color: AppColors.mute)),
           Flexible(
             child: Text(v,
                 textAlign: TextAlign.end,
@@ -448,8 +441,7 @@ class ChatScreen extends ConsumerWidget {
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w700)),
                   const Text('âœ“ Verified employer',
-                      style: TextStyle(
-                          fontSize: 10.5, color: AppColors.teal)),
+                      style: TextStyle(fontSize: 10.5, color: AppColors.teal)),
                 ],
               ),
             ),
@@ -501,8 +493,7 @@ class ChatScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: TextButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/rate'),
+              onPressed: () => Navigator.pushNamed(context, '/rate'),
               child: const Text('Mark job complete â†’'),
             ),
           ),
@@ -530,8 +521,7 @@ class ChatScreen extends ConsumerWidget {
         ),
         child: Text(text,
             style: TextStyle(
-                fontSize: 12.5,
-                color: mine ? Colors.white : AppColors.text)),
+                fontSize: 12.5, color: mine ? Colors.white : AppColors.text)),
       ),
     );
   }
@@ -566,22 +556,19 @@ class _RateScreenState extends ConsumerState<RateScreen> {
     final uid = ref.read(authProvider).whenOrNull(data: (u) => u?.uid);
 
     if (job != null && uid != null) {
-      final review = ReviewModel(
-        reviewId: '',
-        jobId: job.id,
-        applicationId: '',
-        reviewerId: uid,
-        reviewedUserId: job.employerId,
-        reviewerRole: 'job_seeker',
-        rating: _rating,
-        comment: _noteController.text.trim(),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      );
       try {
-        await FirestoreService.instance.submitReview(review);
+        // Single trust score system: increment employer's score based on
+        // the star rating (1–5 stars → 0–20 pts added to their current score).
+        final pts = ((_rating - 1) / 4.0 * 20).roundToDouble();
+        final currentScore =
+            ref.read(userProvider).valueOrNull?.trustScore ?? 0;
+        final newScore = (currentScore + pts).clamp(0.0, 100.0);
+        await FirestoreService.instance
+            .updateTrustScore(job.employerId, newScore);
+
         // Notify the employer that they received a new review.
-        final seekerName = ref.read(userProvider).valueOrNull?.fullName ?? 'A worker';
+        final seekerName =
+            ref.read(userProvider).valueOrNull?.fullName ?? 'A worker';
         unawaited(NotificationService.instance.reviewReceived(
           userId: job.employerId,
           reviewerName: seekerName,
@@ -626,20 +613,17 @@ class _RateScreenState extends ConsumerState<RateScreen> {
                     color: AppColors.ink)),
             const SizedBox(height: 4),
             Text('â‚¹$salary has been released to your wallet',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.mute)),
+                style: const TextStyle(fontSize: 12, color: AppColors.mute)),
             const SizedBox(height: 18),
             AppCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Escrow released',
-                      style: TextStyle(
-                          fontSize: 12, color: AppColors.mute)),
+                      style: TextStyle(fontSize: 12, color: AppColors.mute)),
                   Text('â‚¹$salary',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.teal)),
+                          fontWeight: FontWeight.w700, color: AppColors.teal)),
                 ],
               ),
             ),
@@ -680,8 +664,8 @@ class _RateScreenState extends ConsumerState<RateScreen> {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Add a note for other job seekers (optional)',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 contentPadding: const EdgeInsets.all(12),
               ),
             ),

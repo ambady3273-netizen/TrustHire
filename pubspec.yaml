@@ -21,8 +21,6 @@ dependencies:
 
   # State Management
   flutter_riverpod: ^2.6.1
-  # Navigation
-  go_router: ^16.0.0
 
   # Local Storage
   shared_preferences: ^2.5.3
@@ -30,6 +28,9 @@ dependencies:
   # File Upload
   image_picker: ^1.2.0
   file_picker: ^10.3.2
+
+  # URL launcher (used by admin KYC doc viewer)
+  url_launcher: ^6.3.1
 
   # Utilities
   uuid: ^4.5.1

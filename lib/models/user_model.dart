@@ -8,6 +8,9 @@ class UserModel {
   final bool verified;
   final double trustScore;
   final String profileImage;
+  final String governmentIdUrl;
+  final String kycSelfieUrl;
+  final String referralCode;
   final Timestamp createdAt;
   final Timestamp lastLogin;
 
@@ -19,6 +22,9 @@ class UserModel {
     required this.verified,
     required this.trustScore,
     required this.profileImage,
+    this.governmentIdUrl = '',
+    this.kycSelfieUrl = '',
+    this.referralCode = '',
     required this.createdAt,
     required this.lastLogin,
   });
@@ -32,6 +38,9 @@ class UserModel {
       verified: map['verified'] ?? false,
       trustScore: (map['trustScore'] ?? 0).toDouble(),
       profileImage: map['profileImage'] ?? '',
+      governmentIdUrl: map['governmentIdUrl'] ?? '',
+      kycSelfieUrl: map['kycSelfieUrl'] ?? '',
+      referralCode: map['referralCode'] ?? '',
       createdAt: map['createdAt'] ?? Timestamp.now(),
       lastLogin: map['lastLogin'] ?? Timestamp.now(),
     );
@@ -46,6 +55,9 @@ class UserModel {
       'verified': verified,
       'trustScore': trustScore,
       'profileImage': profileImage,
+      'governmentIdUrl': governmentIdUrl,
+      'kycSelfieUrl': kycSelfieUrl,
+      'referralCode': referralCode,
       'createdAt': createdAt,
       'lastLogin': lastLogin,
     };
@@ -59,6 +71,9 @@ class UserModel {
     bool? verified,
     double? trustScore,
     String? profileImage,
+    String? governmentIdUrl,
+    String? kycSelfieUrl,
+    String? referralCode,
     Timestamp? createdAt,
     Timestamp? lastLogin,
   }) {
@@ -70,6 +85,9 @@ class UserModel {
       verified: verified ?? this.verified,
       trustScore: trustScore ?? this.trustScore,
       profileImage: profileImage ?? this.profileImage,
+      governmentIdUrl: governmentIdUrl ?? this.governmentIdUrl,
+      kycSelfieUrl: kycSelfieUrl ?? this.kycSelfieUrl,
+      referralCode: referralCode ?? this.referralCode,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
     );
