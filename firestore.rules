@@ -38,11 +38,12 @@ service cloud.firestore {
     // isAdmin() is only used for writes (update/delete).
     // ─────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Simple: you can read your own doc. Admin can read all.
-      // isAdmin() here is called on a SINGLE doc get — acceptable.
-      allow read: if isAuth() && (
+      // Own doc OR admin (single-doc get — acceptable cost).
+      allow get: if isAuth() && (
         request.auth.uid == userId || isAdmin()
       );
+      // List queries (used by Admin Analytics) — admin only.
+      allow list: if isAuth() && isAdmin();
 
       allow create: if isAuth()
         && request.auth.uid == userId

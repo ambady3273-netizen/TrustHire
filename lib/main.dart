@@ -57,7 +57,21 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const ProviderScope(child: TrustHireApp()));
+
+  // Load saved locale BEFORE runApp so the first frame shows
+  // the correct language — this is the fix for language not applying.
+  final savedLocale = await loadSavedLocale();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        // Override the initial state with the saved locale.
+        localeProvider.overrideWith(
+            (ref) => LocaleNotifier(savedLocale)),
+      ],
+      child: const TrustHireApp(),
+    ),
+  );
 }
 
 class TrustHireApp extends ConsumerStatefulWidget {
