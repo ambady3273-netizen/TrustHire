@@ -5,16 +5,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme.dart';
+import '../../screens/seeker/seeker_dashboard.dart';
+import '../../screens/employer/employer_dashboard.dart';
+import '../../screens/admin/admin_dashboard.dart';
 import 'login_screen.dart';
 
-/// AuthGate — app entry point.
-///
-/// Flow:
-///   loading          → spinner
-///   not signed in    → LoginScreen
-///   signed in + doc  → route by role
-///   signed in, no doc→ auto-create doc from Firebase Auth data → route
-///   Firestore error  → retry/logout screen
+// ─────────────────────────────────────────────────────────────
+// AuthGate — the SINGLE source of truth for routing.
+//
+// KEY DESIGN:
+//   • AuthGate watches userProvider (a real-time Firestore stream).
+//   • It RETURNS the correct widget directly — NO Navigator calls.
+//   • When userProvider emits a new value (login/logout/role change)
+//     Riverpod rebuilds AuthGate instantly and the correct screen
+//     appears without any delay or manual navigation.
+//
+// This completely eliminates the "need to restart app" bug.
+// ─────────────────────────────────────────────────────────────
+
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -23,43 +31,54 @@ class AuthGate extends ConsumerWidget {
     final userAsync = ref.watch(userProvider);
 
     return userAsync.when(
+      // ── Still loading ──────────────────────────────────────
       loading: () => const _LoadingScreen(),
 
+      // ── Error ──────────────────────────────────────────────
       error: (error, _) => _ErrorScreen(
         message: 'Something went wrong.\n\n${error.toString()}',
-        onRetry: () => ref.invalidate(userProvider),
+        onRetry:  () => ref.invalidate(userProvider),
         onLogout: () => ref.read(authProvider.notifier).logout(),
       ),
 
+      // ── Data ───────────────────────────────────────────────
       data: (userModel) {
-        // ── Not signed in ─────────────────────────────────────
+        // Not signed in
         if (userModel == null) {
-          final firebaseUser = ref.read(authServiceProvider).currentUser;
-
-          // Truly not logged in → show login
+          final firebaseUser =
+              ref.read(authServiceProvider).currentUser;
           if (firebaseUser == null) {
             return const LoginScreen();
           }
-
-          // Firebase user exists but Firestore doc is missing.
-          // Auto-create the document from available Firebase Auth data
-          // so the user isn't blocked.
+          // Firebase user exists but Firestore doc missing
           return _AutoCreateProfileScreen(
-            uid: firebaseUser.uid,
-            email: firebaseUser.email ?? '',
+            uid:         firebaseUser.uid,
+            email:       firebaseUser.email ?? '',
             displayName: firebaseUser.displayName ?? '',
-            onLogout: () => ref.read(authProvider.notifier).logout(),
+            onLogout:    () => ref.read(authProvider.notifier).logout(),
           );
         }
 
-        // ── Signed in — check suspension then route by role ──
+        // Suspended
         if (userModel.suspended) {
           return _SuspendedScreen(
-            reason: userModel.suspendedReason,
+            reason:   userModel.suspendedReason,
             onLogout: () => ref.read(authProvider.notifier).logout(),
           );
         }
-        return _RoleRouter(role: userModel.role);
+
+        // ── DIRECT widget return by role — NO navigation ──────
+        // Riverpod rebuilds this instantly when role changes.
+        switch (userModel.role) {
+          case 'job_seeker':
+            return const SeekerDashboard();
+          case 'employer':
+            return const EmployerDashboard();
+          case 'admin':
+            return const AdminDashboard();
+          default:
+            return _UnknownRoleScreen(role: userModel.role);
+        }
       },
     );
   }
@@ -94,41 +113,31 @@ class _AutoCreateProfileScreenState
   String _selectedRole = 'job_seeker';
 
   Future<void> _createProfile() async {
-    setState(() {
-      _isCreating = true;
-      _error = null;
-    });
+    setState(() { _isCreating = true; _error = null; });
 
     try {
       final firestore = ref.read(firestoreServiceProvider);
-      final now = Timestamp.now();
-      final user = UserModel(
-        uid: widget.uid,
-        fullName: widget.displayName.isNotEmpty
+      final now      = Timestamp.now();
+      final user     = UserModel(
+        uid:          widget.uid,
+        fullName:     widget.displayName.isNotEmpty
             ? widget.displayName
             : widget.email.split('@').first,
-        email: widget.email,
-        role: _selectedRole,
-        verified: false,
-        trustScore: 0,
+        email:        widget.email,
+        role:         _selectedRole,
+        verified:     false,
+        trustScore:   0,
         profileImage: '',
-        createdAt: now,
-        lastLogin: now,
+        createdAt:    now,
+        lastLogin:    now,
       );
       await firestore.createUser(user);
-
-      // Wait briefly for Firestore to propagate, then re-read.
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-
-      // Invalidate so the AuthGate StreamProvider re-fetches the
-      // new document and routes the user to their dashboard.
-      if (mounted) {
-        ref.invalidate(userProvider);
-      }
+      // userProvider will automatically pick up the new doc
+      // and rebuild AuthGate with the correct dashboard.
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Failed to create profile: ${e.toString()}\n\n'
-            'Please check your internet connection and try again.');
+        setState(() => _error =
+            'Failed to create profile: ${e.toString()}');
       }
     } finally {
       if (mounted) setState(() => _isCreating = false);
@@ -148,51 +157,45 @@ class _AutoCreateProfileScreenState
               const Icon(Icons.account_circle_outlined,
                   size: 72, color: AppColors.ink),
               const SizedBox(height: 20),
-              const Text(
-                'Complete Your Profile',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink),
-              ),
+              const Text('Complete Your Profile',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink)),
               const SizedBox(height: 12),
               Text(
-                'We found your account (${widget.email}) but your profile '
-                'data is incomplete. Choose your role to continue.',
+                'We found your account (${widget.email}) but your '
+                'profile data is incomplete. Choose your role to continue.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.mute, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 28),
-
-              // Role selector
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(
-                    value: 'job_seeker',
-                    icon: Icon(Icons.person),
-                    label: Text('Job Seeker'),
-                  ),
+                      value: 'job_seeker',
+                      icon: Icon(Icons.person),
+                      label: Text('Job Seeker')),
                   ButtonSegment(
-                    value: 'employer',
-                    icon: Icon(Icons.business),
-                    label: Text('Employer'),
-                  ),
+                      value: 'employer',
+                      icon: Icon(Icons.business),
+                      label: Text('Employer')),
                 ],
                 selected: {_selectedRole},
                 onSelectionChanged: _isCreating
                     ? null
-                    : (v) => setState(() => _selectedRole = v.first),
+                    : (v) =>
+                        setState(() => _selectedRole = v.first),
               ),
-
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!,
-                    style: const TextStyle(color: AppColors.coral),
+                    style:
+                        const TextStyle(color: AppColors.coral),
                     textAlign: TextAlign.center),
               ],
-
               const SizedBox(height: 28),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -209,10 +212,12 @@ class _AutoCreateProfileScreenState
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                              strokeWidth: 2,
+                              color: Colors.white))
                       : const Text('Continue',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -222,13 +227,7 @@ class _AutoCreateProfileScreenState
                 child: OutlinedButton.icon(
                   onPressed: _isCreating
                       ? null
-                      : () async {
-                          await widget.onLogout();
-                          if (context.mounted) {
-                            Navigator.pushNamedAndRemoveUntil(
-                                context, '/login', (r) => false);
-                          }
-                        },
+                      : () async => await widget.onLogout(),
                   icon: const Icon(Icons.logout),
                   label: const Text('Logout'),
                   style: OutlinedButton.styleFrom(
@@ -248,72 +247,11 @@ class _AutoCreateProfileScreenState
 }
 
 // ─────────────────────────────────────────────────────────────
-// Role router
-// ─────────────────────────────────────────────────────────────
-
-class _RoleRouter extends StatefulWidget {
-  final String role;
-  const _RoleRouter({required this.role});
-
-  @override
-  State<_RoleRouter> createState() => _RoleRouterState();
-}
-
-class _RoleRouterState extends State<_RoleRouter> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _navigate(widget.role);
-    });
-  }
-
-  // ── KEY FIX: re-navigate when role changes ─────────────────
-  // This fires when userProvider emits a new role after login/logout.
-  @override
-  void didUpdateWidget(_RoleRouter oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.role != widget.role) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _navigate(widget.role);
-      });
-    }
-  }
-
-  void _navigate(String role) {
-    final route = _routeForRole(role);
-    if (route != null) {
-      // Remove all previous routes so back button can't go to old dashboard.
-      Navigator.pushNamedAndRemoveUntil(
-          context, route, (r) => false);
-    }
-  }
-
-  String? _routeForRole(String role) {
-    switch (role) {
-      case 'job_seeker': return '/seekerDashboard';
-      case 'employer':   return '/employerDashboard';
-      case 'admin':      return '/adminDashboard';
-      default:           return null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_routeForRole(widget.role) != null) return const _LoadingScreen();
-    return _UnknownRoleScreen(role: widget.role);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
 // Helper screens
 // ─────────────────────────────────────────────────────────────
 
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
-
   @override
   Widget build(BuildContext context) => const Scaffold(
         backgroundColor: AppColors.paper,
@@ -325,7 +263,6 @@ class _ErrorScreen extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
   final Future<void> Function() onLogout;
-
   const _ErrorScreen({
     required this.message,
     required this.onRetry,
@@ -342,7 +279,8 @@ class _ErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.coral),
+              const Icon(Icons.error_outline,
+                  size: 64, color: AppColors.coral),
               const SizedBox(height: 20),
               const Text('Connection Error',
                   style: TextStyle(
@@ -352,42 +290,25 @@ class _ErrorScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.mute, height: 1.5)),
+                  style: const TextStyle(
+                      color: AppColors.mute, height: 1.5)),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.ink,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14))),
-                ),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: Colors.white),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await onLogout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/login', (r) => false);
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.coral,
-                      side: const BorderSide(color: AppColors.coral),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14))),
-                ),
+              OutlinedButton.icon(
+                onPressed: () async => await onLogout(),
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.coral,
+                    side: const BorderSide(color: AppColors.coral)),
               ),
             ],
           ),
@@ -422,31 +343,21 @@ class _UnknownRoleScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'Your account has an unrecognised role: "$role". '
-                'Please contact support or log out and register again.',
+                'Please contact support.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.mute, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: Consumer(
-                  builder: (context, ref, _) => ElevatedButton.icon(
-                    onPressed: () async {
-                      await ref.read(authProvider.notifier).logout();
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, '/login', (r) => false);
-                      }
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.ink,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14))),
-                  ),
+              Consumer(
+                builder: (context, ref, _) => ElevatedButton.icon(
+                  onPressed: () async =>
+                      await ref.read(authProvider.notifier).logout(),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Logout'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.ink,
+                      foregroundColor: Colors.white),
                 ),
               ),
             ],
@@ -464,7 +375,10 @@ class _UnknownRoleScreen extends StatelessWidget {
 class _SuspendedScreen extends StatelessWidget {
   final String reason;
   final Future<void> Function() onLogout;
-  const _SuspendedScreen({required this.reason, required this.onLogout});
+  const _SuspendedScreen({
+    required this.reason,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -480,20 +394,18 @@ class _SuspendedScreen extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.coralLight,
-                  shape: BoxShape.circle,
+                  color:  AppColors.coralLight,
+                  shape:  BoxShape.circle,
                 ),
                 child: const Icon(Icons.block_rounded,
                     size: 38, color: AppColors.coral),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Account Suspended',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink),
-              ),
+              const Text('Account Suspended',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink)),
               const SizedBox(height: 12),
               Text(
                 reason.isNotEmpty
@@ -501,7 +413,8 @@ class _SuspendedScreen extends StatelessWidget {
                     : 'Your account has been suspended. '
                         'Please contact support for assistance.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.mute, height: 1.5),
+                style: const TextStyle(
+                    color: AppColors.mute, height: 1.5),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -510,25 +423,15 @@ class _SuspendedScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: AppColors.mute),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await onLogout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/login', (r) => false);
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.coral,
-                    side: const BorderSide(color: AppColors.coral),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
+              OutlinedButton.icon(
+                onPressed: () async => await onLogout(),
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.coral,
+                  side: const BorderSide(color: AppColors.coral),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ],

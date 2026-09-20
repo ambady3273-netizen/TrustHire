@@ -97,10 +97,7 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
   Future<void> _signInWithCred(PhoneAuthCredential cred) async {
     try {
       await FirebaseAuth.instance.signInWithCredential(cred);
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/authGate', (r) => false);
-      }
+      // AuthGate handles routing automatically — no navigation needed.
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {

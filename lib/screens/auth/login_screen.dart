@@ -47,21 +47,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (result != null) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result),
           backgroundColor: Colors.red,
         ),
       );
-
       return;
     }
-
-    if (!mounted) return;
-
-    // Let AuthGate read the Firestore role and route correctly.
-    Navigator.pushReplacementNamed(context, '/authGate');
+    // ── No navigation needed ───────────────────────────────
+    // AuthGate watches userProvider in real-time.
+    // Login changes the auth state → userProvider emits the
+    // new user → AuthGate rebuilds and shows the correct dashboard
+    // AUTOMATICALLY. Zero navigation required.
   }
 
   @override
