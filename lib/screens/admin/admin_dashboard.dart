@@ -68,7 +68,10 @@ class AdminDashboard extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
-              // AuthGate automatically shows LoginScreen.
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true)
+                    .popUntil((route) => route.isFirst);
+              }
             },
           ),
         ],

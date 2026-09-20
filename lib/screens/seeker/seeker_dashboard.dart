@@ -79,8 +79,11 @@ class SeekerDashboard extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
-              // AuthGate automatically shows LoginScreen
-              // when userProvider emits null — no navigation needed.
+              // Hard-pop entire stack — LoginScreen appears instantly.
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true)
+                    .popUntil((route) => route.isFirst);
+              }
             },
           ),
         ],
