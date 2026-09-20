@@ -230,6 +230,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         salary: salary,
         contact: _contactController.text.trim(),
         riskScore: _analysisResult!.riskScore,
+        scamReasons: _analysisResult!.reasons,
         status: status,
         createdAt: DateTime.now(),
       );
