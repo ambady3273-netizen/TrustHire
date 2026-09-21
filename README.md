@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ambady3273-netizen/TrustHire/releases/latest/download/TrustHire-v1.0.apk">
+  <a href="https://github.com/ambady3273-netizen/TrustHire/releases/download/v1.0.0/app-release.apk">
     <img src="https://img.shields.io/badge/⬇️%20Download%20APK-TrustHire%20v1.0-1B2A4A?style=for-the-badge" alt="Download APK"/>
   </a>
 </p>
@@ -86,7 +86,7 @@
 
 | Version | Date | Size | Link |
 |---------|------|------|------|
-| v1.0.0 | Sep 2026 | ~58 MB | [Download](https://github.com/ambady3273-netizen/TrustHire/releases/latest/download/TrustHire-v1.0.apk) |
+| v1.0.0 | Sep 2026 | ~58 MB | [Download](https://github.com/ambady3273-netizen/TrustHire/releases/download/v1.0.0/app-release.apk) |
 
 ---
 
