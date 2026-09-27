@@ -166,19 +166,11 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                     backgroundColor: AppColors.tealLight,
                     backgroundImage: _newAvatar != null
                         ? FileImage(_newAvatar!) as ImageProvider
-                        : (user?.profileImage.isNotEmpty == true
-                            ? NetworkImage(user!.profileImage) as ImageProvider
-                            : null),
-                    child: (_newAvatar == null &&
-                            (user?.profileImage.isEmpty ?? true))
-                        ? Text(
-                            user?.fullName.isNotEmpty == true
-                                ? user!.fullName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                                fontSize: 38,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.teal),
+                        : null,
+                    child: _newAvatar == null
+                        ? _AvatarImage(
+                            imageUrl: user?.profileImage ?? '',
+                            name: user?.fullName ?? '',
                           )
                         : null,
                   ),
@@ -309,6 +301,42 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AvatarImage extends StatelessWidget {
+  final String imageUrl;
+  final String name;
+  const _AvatarImage({required this.imageUrl, required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl.isEmpty) {
+      return Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+            fontSize: 38, fontWeight: FontWeight.w700, color: AppColors.teal),
+      );
+    }
+    return ClipOval(
+      child: Image.network(
+        imageUrl,
+        width:  112,
+        height: 112,
+        fit:    BoxFit.cover,
+        errorBuilder: (_, __, ___) => Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: const TextStyle(
+              fontSize: 38,
+              fontWeight: FontWeight.w700,
+              color: AppColors.teal),
+        ),
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return const CircularProgressIndicator(strokeWidth: 2);
+        },
       ),
     );
   }

@@ -55,7 +55,14 @@ service cloud.firestore {
           && request.auth.uid == userId
           && isAllowedSelfRole(request.resource.data.role)
           && request.resource.data.verified == resource.data.verified
-        ) || isAdmin();
+        ) || isAdmin()
+        // Allow trust score updates from any authenticated user
+        // (triggered after rating submission — reviewer writes to reviewee's doc)
+        || (
+          isAuth()
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['trustScore'])
+        );
 
       allow delete: if isAdmin();
     }

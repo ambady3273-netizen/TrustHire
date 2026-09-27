@@ -39,7 +39,10 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
     final m = (msg ?? '').toLowerCase();
     return m.contains('disabled') ||
         m.contains('not allowed') ||
-        m.contains('operation-not-allowed');
+        m.contains('operation-not-allowed') ||
+        m.contains('billing_not_enabled') ||
+        m.contains('billing') ||
+        m.contains('blaze');
   }
 
   Future<void> _sendOtp() async {
@@ -169,11 +172,15 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
                       _Step(
                           n: '3',
                           text:
-                              'Authentication → Sign-in method'),
+                              'Gear icon → Usage & Billing → Upgrade to Blaze'),
                       _Step(
                           n: '4',
                           text:
-                              'Click "Phone" → toggle Enable → Save'),
+                              'Authentication → Sign-in method → Phone → Enable → Save'),
+                      _Step(
+                          n: '5',
+                          text:
+                              'Come back and try Phone Login again'),
                       SizedBox(height: 8),
                       Text(
                         'Then come back and try again.',
