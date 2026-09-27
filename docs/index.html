@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TrustHire — AI Powered Part-Time Jobs</title>
+  <meta name="description" content="India's trusted platform for safe part-time jobs. AI scam detection, KYC verification, GPS tracking, and escrow payments."/>
+  <meta property="og:title" content="TrustHire — Download Free"/>
+  <meta property="og:description" content="AI Powered Part-Time Job Platform for India. Download free for Android."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --ink:#1B2A4A;--teal:#0E7C7B;--gold:#F5A623;--coral:#E15B4F;
+      --paper:#F2F5FA;--white:#fff;--mute:#5B6478;--border:#DFE4EF;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink)}
+
+    /* ── NAV ─────────────────────────────── */
+    nav{background:var(--white);border-bottom:1px solid var(--border);
+      padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(27,42,74,.06)}
+    .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;color:var(--ink)}
+    .logo span{width:32px;height:32px;background:var(--ink);border-radius:8px;
+      display:grid;place-items:center;color:var(--gold);font-size:18px}
+    .nav-dl{background:var(--ink);color:var(--white);padding:8px 18px;border-radius:10px;
+      text-decoration:none;font-weight:700;font-size:13px;transition:.2s}
+    .nav-dl:hover{background:var(--teal)}
+
+    /* ── HERO ────────────────────────────── */
+    .hero{padding:60px 24px 40px;text-align:center;max-width:600px;margin:0 auto}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--teal);
+      color:var(--white);padding:5px 14px;border-radius:100px;font-size:12px;
+      font-weight:700;margin-bottom:20px;letter-spacing:.4px}
+    .hero h1{font-size:clamp(28px,6vw,46px);font-weight:800;line-height:1.15;
+      color:var(--ink);margin-bottom:16px}
+    .hero h1 span{color:var(--teal)}
+    .hero p{font-size:16px;color:var(--mute);line-height:1.7;margin-bottom:32px}
+    .dl-btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);
+      color:var(--white);padding:16px 32px;border-radius:14px;text-decoration:none;
+      font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(27,42,74,.25);
+      transition:.2s;margin-bottom:10px}
+    .dl-btn:hover{background:var(--teal);transform:translateY(-2px)}
+    .dl-btn svg{width:22px;height:22px}
+    .dl-note{font-size:12px;color:var(--mute)}
+
+    /* ── STATS ───────────────────────────── */
+    .stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+      padding:0 24px 48px;max-width:600px;margin:0 auto}
+    .stat{background:var(--white);border:1px solid var(--border);border-radius:14px;
+      padding:18px 24px;text-align:center;flex:1;min-width:130px}
+    .stat-val{font-size:26px;font-weight:800;color:var(--ink)}
+    .stat-lbl{font-size:11.5px;color:var(--mute);margin-top:2px}
+
+    /* ── FEATURES ────────────────────────── */
+    .section{max-width:700px;margin:0 auto;padding:0 24px 56px}
+    .section-title{font-size:22px;font-weight:800;color:var(--ink);
+      margin-bottom:20px;text-align:center}
+    .features{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+    .feature{background:var(--white);border:1px solid var(--border);border-radius:14px;
+      padding:18px;transition:.2s}
+    .feature:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(14,124,123,.1)}
+    .feature-icon{font-size:28px;margin-bottom:10px}
+    .feature h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px}
+    .feature p{font-size:12px;color:var(--mute);line-height:1.5}
+
+    /* ── STEPS ───────────────────────────── */
+    .steps{display:grid;gap:14px}
+    .step{background:var(--white);border:1px solid var(--border);border-radius:14px;
+      padding:16px 20px;display:flex;align-items:flex-start;gap:14px}
+    .step-num{width:32px;height:32px;background:var(--ink);color:var(--white);
+      border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:14px;
+      flex-shrink:0}
+    .step h3{font-size:14px;font-weight:700;color:var(--ink)}
+    .step p{font-size:12px;color:var(--mute);margin-top:2px;line-height:1.5}
+
+    /* ── LANGUAGES ───────────────────────── */
+    .langs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+    .lang{background:var(--white);border:1px solid var(--border);border-radius:100px;
+      padding:6px 16px;font-size:13px;font-weight:600;color:var(--ink)}
+
+    /* ── DOWNLOAD BANNER ─────────────────── */
+    .dl-banner{background:linear-gradient(135deg,var(--ink),#243760);
+      color:var(--white);text-align:center;padding:48px 24px;margin:0 24px 48px;
+      border-radius:20px;max-width:700px;margin-left:auto;margin-right:auto}
+    .dl-banner h2{font-size:24px;font-weight:800;margin-bottom:8px}
+    .dl-banner p{color:rgba(255,255,255,.7);margin-bottom:24px;font-size:14px}
+    .dl-banner .dl-btn{background:var(--gold);color:var(--ink)}
+    .dl-banner .dl-btn:hover{background:#fff}
+
+    /* ── FOOTER ──────────────────────────── */
+    footer{text-align:center;padding:24px;color:var(--mute);font-size:12px;
+      border-top:1px solid var(--border);background:var(--white)}
+    footer a{color:var(--teal);text-decoration:none}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <span>🛡️</span> TrustHire
+  </div>
+  <a class="nav-dl" href="https://github.com/ambady3273-netizen/TrustHire/releases/download/v1.0.1/app-release.apk">
+    ⬇ Download Free
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🇮🇳 Made for India · 100% Free</div>
+  <h1>Find Safe <span>Part-Time Jobs</span><br/>Near You</h1>
+  <p>TrustHire uses AI to detect fake jobs before you apply. Every employer is KYC-verified. Your payment is protected by escrow.</p>
+  <a class="dl-btn" href="https://github.com/ambady3273-netizen/TrustHire/releases/download/v1.0.1/app-release.apk">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+    </svg>
+    Download for Android — Free
+  </a>
+  <div class="dl-note">Android 5.0+ · ~58 MB · v1.0.1</div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-val">15</div>
+    <div class="stat-lbl">AI Detection Layers</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">7</div>
+    <div class="stat-lbl">Indian Languages</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">🔒</div>
+    <div class="stat-lbl">Escrow Protected Pay</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">Free</div>
+    <div class="stat-lbl">Always & Forever</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section">
+  <div class="section-title">Everything you need, built-in</div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <h3>AI Scam Detection</h3>
+      <p>15-layer analysis with 200+ patterns catches fake jobs before you apply</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">✅</div>
+      <h3>KYC Verified</h3>
+      <p>Every employer submits Government ID + selfie — you know they're real</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <h3>Escrow Payments</h3>
+      <p>Employer's money is held safely until you finish the job — guaranteed</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📍</div>
+      <h3>GPS Tracking</h3>
+      <p>Share live location with employer. Find jobs near you within 20 km</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">💬</div>
+      <h3>Real-time Chat</h3>
+      <p>Chat directly with employers after getting accepted — no phone needed</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⭐</div>
+      <h3>Trust Score</h3>
+      <p>Build your reputation with every completed job and employer rating</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📋</div>
+      <h3>Work Portfolio</h3>
+      <p>Every completed job adds to your portfolio — like a resume that builds itself</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🌐</div>
+      <h3>7 Languages</h3>
+      <p>Full support for Indian languages — use the app in your own language</p>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO INSTALL -->
+<div class="section">
+  <div class="section-title">How to install (2 minutes)</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Download the APK</h3>
+        <p>Tap the Download button above. The file is ~58 MB and downloads directly to your phone.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Allow installation</h3>
+        <p>If your phone asks, tap "Allow from this source" or go to Settings → Security → enable "Unknown sources".</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Install and open</h3>
+        <p>Tap the downloaded file and install. Open TrustHire and register with your email or phone number.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <h3>Start using — it's free</h3>
+        <p>Browse jobs, apply, chat with employers, and get paid safely. No subscription, no hidden fees.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LANGUAGES -->
+<div class="section">
+  <div class="section-title">Available in your language</div>
+  <div class="langs">
+    <div class="lang">🇬🇧 English</div>
+    <div class="lang">🇮🇳 தமிழ்</div>
+    <div class="lang">🇮🇳 हिन्दी</div>
+    <div class="lang">🇮🇳 മലയാളം</div>
+    <div class="lang">🇮🇳 తెలుగు</div>
+    <div class="lang">🇮🇳 ಕನ್ನಡ</div>
+    <div class="lang">🇮🇳 मराठी</div>
+  </div>
+</div>
+
+<!-- DOWNLOAD BANNER -->
+<div class="dl-banner">
+  <h2>Ready to find safe work?</h2>
+  <p>Download TrustHire now — completely free, always</p>
+  <a class="dl-btn" href="https://github.com/ambady3273-netizen/TrustHire/releases/download/v1.0.1/app-release.apk">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+    </svg>
+    Download TrustHire v1.0.1
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>TrustHire — AI Powered Part-Time Job Platform for India</p>
+  <p style="margin-top:6px">
+    <a href="https://github.com/ambady3273-netizen/TrustHire">GitHub</a> ·
+    <a href="https://github.com/ambady3273-netizen/TrustHire/releases">All Releases</a> ·
+    Built with ❤️ for blue-collar workers across India
+  </p>
+</footer>
+
+</body>
+</html>
