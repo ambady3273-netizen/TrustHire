@@ -1,0 +1,69 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helper functions ──────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Max file size: 10 MB
+    function isUnder10MB() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Allowed image types
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Allowed document types (PDF + images)
+    function isDocument() {
+      return request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+          || request.resource.contentType == 'application/msword'
+          || request.resource.contentType.matches('application/vnd.*');
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // PROFILE PHOTOS
+    // users/profiles/{uid}/avatar.jpg
+    // ─────────────────────────────────────────────────────────
+    match /profiles/{uid}/{fileName} {
+      allow read:  if true;  // Public — visible on job cards
+      allow write: if isOwner(uid) && isUnder10MB() && isImage();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // KYC DOCUMENTS
+    // kyc/{uid}/government_id.jpg + selfie.jpg
+    // ─────────────────────────────────────────────────────────
+    match /kyc/{uid}/{fileName} {
+      // Only the owner and admins can read KYC docs
+      allow read:  if isOwner(uid);
+      // Owner can upload — image or PDF, max 10 MB
+      allow write: if isOwner(uid) && isUnder10MB() && isDocument();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // CV FILES
+    // cvs/{uid}/{fileName}
+    // ─────────────────────────────────────────────────────────
+    match /cvs/{uid}/{fileName} {
+      allow read:  if isAuth();  // Employers can read CV
+      allow write: if isOwner(uid) && isUnder10MB() && isDocument();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // DEFAULT — deny everything else
+    // ─────────────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
