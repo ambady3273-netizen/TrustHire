@@ -1734,8 +1734,9 @@ function selectWaitlistType(type){
   const input = document.getElementById('waitlistEmail');
   input.placeholder = type === 'company' ? 'you@company.com' : 'you@email.com';
 }
-function joinWaitlist(){
+async function joinWaitlist(){
   const email = document.getElementById('waitlistEmail').value.trim();
+  const btn = document.querySelector('.waitlist-submit');
   if(!email || !email.includes('@')){
     const input = document.getElementById('waitlistEmail');
     input.style.borderColor = 'rgba(255,79,79,0.6)';
@@ -1743,17 +1744,45 @@ function joinWaitlist(){
     setTimeout(()=>input.style.borderColor='', 2000);
     return;
   }
-  // Update counts
-  const companyEl = document.getElementById('wlCompanyCount');
-  const candidateEl = document.getElementById('wlCandidateCount');
-  if(waitlistType === 'company'){
-    companyEl.textContent = parseInt(companyEl.textContent) + 1;
-  } else {
-    candidateEl.textContent = parseInt(candidateEl.textContent) + 1;
+  // Disable button, show loading
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  try {
+    const res = await fetch('https://formspree.io/f/xrpbwdgv', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify({
+        email: email,
+        type: waitlistType,
+        source: 'TrustHire Website Waitlist'
+      })
+    });
+    if(res.ok){
+      // Update counts
+      const companyEl = document.getElementById('wlCompanyCount');
+      const candidateEl = document.getElementById('wlCandidateCount');
+      if(waitlistType === 'company'){
+        companyEl.textContent = parseInt(companyEl.textContent) + 1;
+      } else {
+        candidateEl.textContent = parseInt(candidateEl.textContent) + 1;
+      }
+      // Show success
+      document.getElementById('waitlistForm').style.display = 'none';
+      document.getElementById('waitlistSuccess').classList.add('show');
+    } else {
+      throw new Error('Submission failed');
+    }
+  } catch(err){
+    btn.textContent = 'Try Again';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.background = 'rgba(255,79,79,0.8)';
+    setTimeout(()=>{
+      btn.textContent = 'Join waitlist';
+      btn.style.background = '';
+    }, 3000);
   }
-  // Show success
-  document.getElementById('waitlistForm').style.display = 'none';
-  document.getElementById('waitlistSuccess').classList.add('show');
 }
 
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
