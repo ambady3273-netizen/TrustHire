@@ -182,12 +182,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
     );
 
     final result = ScamDetector.analyze(
-      title: _titleController.text.trim(),
+      title:       _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       companyName: _companyController.text.trim(),
-      location: _locationController.text.trim(),
-      contact: _contactController.text.trim(),
-      salary: salary,
+      location:    _locationController.text.trim(),
+      contact:     _contactController.text.trim(),
+      salary:      salary,
+      category:    _selectedCategory ?? '',
     );
 
     setState(() {
@@ -1224,9 +1225,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Analyzed by TrustHire AI v2.0 · '
-                          '15 detection layers · '
-                          '${result.signals.length} signal${result.signals.length == 1 ? '' : 's'} found',
+                          'TrustHire AI v3.0 · 21 layers · '
+                          '${result.signals.length} signals · '
+                          'Confidence: ${result.confidence}',
                           style: const TextStyle(
                               fontSize: 10.5, color: Color(0xFF5B6478)),
                         ),
