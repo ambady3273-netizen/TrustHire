@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060b17"/>
+      <stop offset="100%" stop-color="#0f1830"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#7c4fe0"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="30%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="80%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#7c4fe0" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#7c4fe0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Grid lines -->
+  <g opacity="0.04" stroke="#00e5ff" stroke-width="1">
+    <line x1="0" y1="90" x2="1200" y2="90"/>
+    <line x1="0" y1="180" x2="1200" y2="180"/>
+    <line x1="0" y1="270" x2="1200" y2="270"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="0" y1="450" x2="1200" y2="450"/>
+    <line x1="0" y1="540" x2="1200" y2="540"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- TH Shield — large, left-center -->
+  <g transform="translate(130, 115)">
+    <!-- Shield outer -->
+    <path d="M175 20 L320 78 L320 200 C320 278 248 328 175 370 C102 328 30 278 30 200 L30 78 Z"
+          fill="rgba(0,229,255,0.05)" stroke="url(#g1)" stroke-width="7" stroke-linejoin="round"/>
+    <!-- Shield inner -->
+    <path d="M175 48 L298 96 L298 198 C298 268 234 312 175 348 C116 312 52 268 52 198 L52 96 Z"
+          fill="none" stroke="url(#g1)" stroke-width="2" stroke-linejoin="round" opacity="0.35"/>
+    <!-- T letter -->
+    <line x1="86" y1="154" x2="156" y2="154" stroke="url(#g1)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="121" y1="154" x2="121" y2="240" stroke="url(#g1)" stroke-width="16" stroke-linecap="round"/>
+    <!-- H letter -->
+    <line x1="190" y1="154" x2="190" y2="240" stroke="url(#g1)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="190" y1="197" x2="260" y2="197" stroke="url(#g1)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="260" y1="154" x2="260" y2="240" stroke="url(#g1)" stroke-width="16" stroke-linecap="round"/>
+    <!-- Dots -->
+    <circle cx="175" cy="290" r="6" fill="url(#g1)" opacity="0.7"/>
+    <circle cx="155" cy="308" r="4" fill="url(#g1)" opacity="0.4"/>
+    <circle cx="195" cy="308" r="4" fill="url(#g1)" opacity="0.4"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="510" y="225" font-family="Arial,sans-serif" font-weight="900" font-size="86" fill="white" letter-spacing="-2">Trust</text>
+  <text x="750" y="225" font-family="Arial,sans-serif" font-weight="900" font-size="86" fill="url(#g1)" letter-spacing="-2">Hire</text>
+
+  <!-- Tagline -->
+  <text x="510" y="285" font-family="Arial,sans-serif" font-weight="400" font-size="28" fill="#b8c8e0" letter-spacing="0.5">India's Safest Part-Time Job Platform</text>
+
+  <!-- Divider line -->
+  <rect x="510" y="312" width="580" height="2" fill="url(#g1)" opacity="0.3" rx="1"/>
+
+  <!-- Feature chips -->
+  <g transform="translate(510, 345)">
+    <!-- Chip 1 -->
+    <rect x="0" y="0" width="168" height="38" rx="19" fill="rgba(0,229,255,0.1)" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+    <text x="84" y="24" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#00e5ff" text-anchor="middle">🛡️  AI Scam Detection</text>
+    <!-- Chip 2 -->
+    <rect x="182" y="0" width="148" height="38" rx="19" fill="rgba(0,229,255,0.1)" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+    <text x="256" y="24" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#00e5ff" text-anchor="middle">✅  Verified Jobs</text>
+    <!-- Chip 3 -->
+    <rect x="344" y="0" width="152" height="38" rx="19" fill="rgba(0,229,255,0.1)" stroke="rgba(0,229,255,0.3)" stroke-width="1.5"/>
+    <text x="420" y="24" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="#00e5ff" text-anchor="middle">💰  Escrow Payments</text>
+  </g>
+
+  <!-- Stats row -->
+  <g transform="translate(510, 430)">
+    <text x="0" y="28" font-family="Arial,sans-serif" font-weight="900" font-size="36" fill="url(#g1)">21</text>
+    <text x="0" y="50" font-family="Arial,sans-serif" font-size="14" fill="#5a6a85">AI Layers</text>
+
+    <text x="120" y="28" font-family="Arial,sans-serif" font-weight="900" font-size="36" fill="url(#g1)">500+</text>
+    <text x="120" y="50" font-family="Arial,sans-serif" font-size="14" fill="#5a6a85">Scam Patterns</text>
+
+    <text x="270" y="28" font-family="Arial,sans-serif" font-weight="900" font-size="36" fill="url(#g1)">100%</text>
+    <text x="270" y="50" font-family="Arial,sans-serif" font-size="14" fill="#5a6a85">Free Forever</text>
+
+    <text x="420" y="28" font-family="Arial,sans-serif" font-weight="900" font-size="36" fill="url(#g1)">v1.0.3</text>
+    <text x="420" y="50" font-family="Arial,sans-serif" font-size="14" fill="#5a6a85">Latest Version</text>
+  </g>
+
+  <!-- Download button shape -->
+  <rect x="510" y="510" width="240" height="58" rx="14" fill="url(#g1)"/>
+  <text x="630" y="545" font-family="Arial,sans-serif" font-weight="800" font-size="18" fill="white" text-anchor="middle">⬇  Download Free · Android</text>
+
+  <!-- URL -->
+  <text x="510" y="598" font-family="Arial,sans-serif" font-size="15" fill="#5a6a85">ambady3273-netizen.github.io/TrustHire</text>
+
+  <!-- Border frame -->
+  <rect x="1" y="1" width="1198" height="628" rx="0" fill="none" stroke="rgba(0,229,255,0.08)" stroke-width="2"/>
+</svg>
