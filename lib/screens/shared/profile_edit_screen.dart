@@ -1,13 +1,13 @@
 ﻿import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/cloudinary_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 
@@ -118,10 +118,9 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
       await fs.updateName(uid, _nameCtrl.text.trim());
 
       if (_newAvatar != null) {
-        final storageRef =
-            FirebaseStorage.instance.ref('profiles/$uid/avatar.jpg');
-        await storageRef.putFile(_newAvatar!);
-        final url = await storageRef.getDownloadURL();
+        // Upload to Cloudinary — no Firebase Storage needed
+        final url = await CloudinaryService.instance
+            .uploadAvatar(uid, _newAvatar!);
         await fs.updateProfileImage(uid, url);
       }
 
@@ -425,15 +424,11 @@ class _KycTabState extends ConsumerState<_KycTab> {
       final uid = ref.read(authServiceProvider).currentUser?.uid;
       if (uid == null) throw Exception('Not logged in.');
 
-      final storage = FirebaseStorage.instance;
-
-      final idRef = storage.ref('kyc/$uid/government_id.jpg');
-      await idRef.putFile(_idFile!);
-      final idUrl = await idRef.getDownloadURL();
-
-      final selfieRef = storage.ref('kyc/$uid/selfie.jpg');
-      await selfieRef.putFile(_selfieFile!);
-      final selfieUrl = await selfieRef.getDownloadURL();
+      // Upload both to Cloudinary — no Firebase Storage needed
+      final idUrl = await CloudinaryService.instance
+          .uploadKycId(uid, _idFile!);
+      final selfieUrl = await CloudinaryService.instance
+          .uploadKycSelfie(uid, _selfieFile!);
 
       await ref.read(firestoreServiceProvider).submitKyc(
             uid: uid,
@@ -870,7 +865,7 @@ class _CvTabState extends ConsumerState<_CvTab> {
 
   Future<void> _pickAndUploadCv() async {
     final result = await FilePicker.platform.pickFiles(
-      type:             FileType.custom,
+      type:              FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
     );
     if (result == null || result.files.isEmpty) return;
@@ -883,10 +878,9 @@ class _CvTabState extends ConsumerState<_CvTab> {
       final uid = ref.read(authServiceProvider).currentUser?.uid;
       if (uid == null) throw Exception('Not logged in.');
 
-      final storageRef = FirebaseStorage.instance
-          .ref('cvs/$uid/${file.name}');
-      await storageRef.putFile(File(file.path!));
-      final url = await storageRef.getDownloadURL();
+      // Upload to Cloudinary — no Firebase Storage needed
+      final url = await CloudinaryService.instance
+          .uploadCvFile(uid, File(file.path!), file.name);
 
       await ref.read(firestoreServiceProvider).updateCv(
             uid:        uid,
